@@ -205,7 +205,7 @@ initSystem();
 app.get('/stories/books', async (req, res) => {
     try {
         let genre = req.query.genre;
-        let limit = parseInt(req.query.limit) || 40; // Fast loading with pagination limit
+        let limit = parseInt(req.query.limit) || 40;
         let query = genre && genre !== 'All' ? { genre } : {};
         let books = await StoryBook.find(query).sort({ createdAt: -1 }).limit(limit);
         res.json(books);

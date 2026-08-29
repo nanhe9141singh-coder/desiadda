@@ -34,7 +34,10 @@
         body { background-color: var(--bg-color); color: var(--text-color); }
         
         header { position: sticky; top: 0; background: var(--glass-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; z-index: 100; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-        .logo { font-family: 'Brush Script MT', cursive; font-size: 34px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-weight: bold; cursor: pointer; letter-spacing: 0.5px; }
+        .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer; }
+        .logo-text { font-family: 'Brush Script MT', cursive; font-size: 34px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; letter-spacing: 0.5px; }
+        .logo img { max-height: 38px; object-fit: contain; object-position: center; border-radius: 6px; }
+
         .nav-icons span { margin-left: 10px; font-size: 17px; cursor: pointer; padding: 7px; border-radius: 50%; position: relative; background: var(--input-bg); }
         .nav-icons span:hover { transform: scale(1.08); background: var(--border-color); }
         
@@ -195,7 +198,10 @@
 <body onclick="hideSearch()">
 
     <header>
-        <a href="#" class="logo" id="brandLogoText" onclick="showHome()">DesiAdda</a>
+        <a href="#" class="logo" id="brandLogoText" onclick="showHome()">
+            <img id="brandLogoImg" class="hidden" alt="Logo">
+            <span id="brandLogoName" class="logo-text">DesiAdda</span>
+        </a>
         
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchUsers(event)" onclick="event.stopPropagation()">
@@ -653,7 +659,6 @@
 
         if(!currentUser) window.location.href = "login.html";
 
-        // Verify if user still exists in database
         async function verifyActiveUser() {
             if(!currentUser) { window.location.href = "login.html"; return; }
             try {
@@ -1084,13 +1089,17 @@
             try {
                 let res = await fetch('/settings/logo');
                 let data = await res.json();
-                let logoElement = document.getElementById('brandLogoText');
+                let logoImgElement = document.getElementById('brandLogoImg');
+                let logoNameElement = document.getElementById('brandLogoName');
                 
+                logoNameElement.innerText = data.logoText || 'DesiAdda';
+                document.getElementById('pageTitle').innerText = `${data.logoText || 'DesiAdda'} - Ultimate Social`;
+
                 if(data.logoImg) {
-                    logoElement.innerHTML = `<img src="${data.logoImg}" style="max-height: 38px; object-fit: contain; object-position: center; vertical-align: middle;" alt="Logo">`;
-                } else if(data.logoText) {
-                    logoElement.innerText = data.logoText;
-                    document.getElementById('pageTitle').innerText = `${data.logoText} - Ultimate Social`;
+                    logoImgElement.src = data.logoImg;
+                    logoImgElement.classList.remove('hidden');
+                } else {
+                    logoImgElement.classList.add('hidden');
                 }
             } catch(e) {}
         }

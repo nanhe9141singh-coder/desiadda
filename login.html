@@ -3,83 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DesiAdda - Login & Signup</title>
+    <title>Login - DesiAdda</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-        body { background-color: #fafafa; display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; }
+        body { background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
         
-        .login-card { background: #fff; border: 1px solid #dbdbdb; padding: 35px; width: 360px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 10px; }
-        .logo { font-family: 'Brush Script MT', cursive; font-size: 42px; margin-bottom: 20px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .login-card { background: #ffffff; border: 1px solid #dbdbdb; width: 350px; padding: 40px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-family: 'Brush Script MT', cursive; font-size: 42px; background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; font-weight: bold; }
         
-        input { width: 100%; padding: 10px 12px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 13px; outline: none; }
-        .btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 14px; }
-        .btn:hover { background: #1877f2; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 13px; outline: none; }
+        input:focus { border-color: #a8a8a8; }
         
-        .error-msg { color: #ed4956; font-size: 13px; margin-bottom: 10px; }
+        .login-btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .login-btn:hover { background: #1877f2; }
         
-        .switch-text { font-size: 13px; color: #262626; margin-top: 15px; }
-        .switch-text span { color: #0095f6; font-weight: bold; cursor: pointer; }
+        .divider { display: flex; align-items: center; margin: 20px 0; color: #8e8e8e; font-size: 12px; font-weight: 600; }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #dbdbdb; }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
         
-        .forgot-link { font-size: 12px; color: #00376b; display: block; margin-top: 12px; text-decoration: none; cursor: pointer; }
-        .forgot-link:hover { text-decoration: underline; }
-
-        footer { margin-top: 20px; width: 100%; max-width: 900px; padding: 20px; text-align: center; }
-        .footer-links-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
-        .footer-links-grid a { color: #8e8e8e; font-size: 12px; text-decoration: none; cursor: pointer; }
-        .footer-links-grid a:hover { text-decoration: underline; }
-        .footer-copyright { color: #8e8e8e; font-size: 12px; }
-
-        /* Ekdum chhota aur hidden style admin link ke liye */
-        .secret-admin-trigger { margin-top: 15px; }
-        .secret-admin-trigger a { color: #fafafa; font-size: 9px; text-decoration: none; transition: color 0.2s; }
-        .secret-admin-trigger a:hover { color: #dbdbdb; }
-
+        .signup-box { background: #ffffff; border: 1px solid #dbdbdb; width: 350px; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; font-size: 14px; }
+        .signup-box a, .forgot-link { color: #0095f6; text-decoration: none; font-weight: bold; cursor: pointer; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: #fff; padding: 24px; border-radius: 8px; width: 320px; text-align: center; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="loginSection" class="login-card">
+    <div class="login-card">
         <h1 class="logo">DesiAdda</h1>
-        <div id="loginError" class="error-msg"></div>
         
         <input type="text" id="loginUsername" placeholder="Phone number, username, or email">
         <input type="password" id="loginPassword" placeholder="Password">
-        <button class="btn" onclick="loginUser()">Log In</button>
+        
+        <button class="login-btn" onclick="loginUser()">Log In</button>
+        
+        <div style="margin-top: 15px;">
+            <a class="forgot-link" onclick="openForgotPasswordModal()">Password bhool gaye?</a>
+        </div>
 
-        <a class="forgot-link" onclick="showForgotModal()">Password bhool gaye?</a>
-
-        <div class="switch-text">
-            Account nahi hai? <span onclick="showSignup()">Sign up</span>
+        <div class="divider">OR</div>
+        
+        <div style="margin-top: 10px;">
+            <a href="admin.html" style="color: #64748b; font-size: 12px; text-decoration: none;">🛡️ Admin Portal Login</a>
         </div>
     </div>
 
-    <footer>
-        <div class="footer-links-grid">
-            <a>Meta</a><a>About</a><a>Blog</a><a>Jobs</a><a>Help</a><a>API</a><a>Privacy Policy</a><a>Terms & Conditions</a>
+    <div class="signup-box">
+        Account nahi hai? <a href="signup.html">Sign up</a>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>Password Reset</h3>
+            <p style="font-size: 12px; color: #737373; margin: 10px 0;">Apna registered Email ya Username dalein:</p>
+            <input type="text" id="forgotInput" placeholder="Email ya Username">
+            <button class="login-btn" onclick="submitForgotPassword()">Send Reset Link</button>
+            <br><br>
+            <a onclick="closeForgotPasswordModal()" style="font-size: 12px; cursor: pointer; color: #262626;">Cancel</a>
         </div>
-        <div class="footer-copyright">© 2026 DesiAdda from Anoop Singh</div>
-        
-        <!-- Yahan par ekdum chhota sa invisible/subtle link diya hai jo kisi ko nazar nahi aayega -->
-        <div class="secret-admin-trigger">
-            <a href="admin.html">🔒</a>
-        </div>
-    </footer>
+    </div>
 
     <script>
         async function loginUser() {
             let username = document.getElementById('loginUsername').value.trim();
-            let password = document.getElementById('loginPassword').value;
-            let errorBox = document.getElementById('loginError');
-            errorBox.innerText = "";
+            let password = document.getElementById('loginPassword').value.trim();
 
             if(!username || !password) {
-                errorBox.innerText = "Kripya username aur password bharein!";
+                alert("Kripya Username aur Password dono bharein!");
                 return;
             }
 
             try {
-                let res = await fetch('http://localhost:3000/login', {
+                let res = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -90,11 +89,30 @@
                     localStorage.setItem("loggedInUser", data.username);
                     window.location.href = "index.html";
                 } else {
-                    errorBox.innerText = data.message || "Login fail ho gaya!";
+                    alert(data.message || "Galat Username ya Password!");
                 }
-            } catch (err) {
-                errorBox.innerText = "Server se connect nahi ho paya!";
+            } catch(e) {
+                alert("Server connection error!");
             }
+        }
+
+        function openForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+        }
+
+        function submitForgotPassword() {
+            let val = document.getElementById('forgotInput').value.trim();
+            if(!val) {
+                alert("Kripya email ya username dalein!");
+                return;
+            }
+            alert("Password reset link aapke registered email par bhej diya gaya hai!");
+            closeForgotPasswordModal();
+            document.getElementById('forgotInput').value = "";
         }
     </script>
 </body>
