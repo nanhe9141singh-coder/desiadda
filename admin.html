@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Portal - DesiAdda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background-color: #fafafa; color: #262626; display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; }
+        
+        .login-box { background: #fff; border: 1px solid #dbdbdb; padding: 40px; width: 360px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-family: 'Brush Script MT', cursive; font-size: 38px; margin-bottom: 25px; color: #262626; }
+        input { width: 100%; padding: 10px; margin-bottom: 12px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 14px; outline: none; }
+        .btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        
+        .dashboard { width: 92%; max-width: 1000px; background: #fff; border: 1px solid #dbdbdb; border-radius: 8px; padding: 25px; margin: 20px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dbdbdb; padding-bottom: 15px; margin-bottom: 20px; }
+        
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .admin-nav button { padding: 8px 16px; border: 1px solid #dbdbdb; background: #efefef; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .admin-nav button.active { background: #0095f6; color: white; border-color: #0095f6; }
+
+        .section-box { display: none; }
+        .section-box.active { display: block; }
+
+        .user-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #efefef; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-info img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fafafa; border: 1px solid #dbdbdb; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-card h3 { font-size: 24px; color: #0095f6; margin-top: 5px; }
+
+        .btn-green { background: #0095f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-orange { background: #ff9800; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-red { background: #ed4956; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-app { background: linear-gradient(45deg, #f09433, #dc2743); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .error-msg { color: #ed4956; font-size: 13px; margin-bottom: 10px; }
+        .success-msg { color: #00a400; font-size: 13px; margin-bottom: 10px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="adminLoginSection" class="login-box">
+        <h1 class="logo">DesiAdda Admin</h1>
+        <div id="adminLoginError" class="error-msg"></div>
+        <input type="text" id="adminUser" placeholder="Admin Username">
+        <input type="password" id="adminPass" placeholder="Password">
+        <button class="btn" onclick="adminLogin()">Login to Admin Panel</button>
+        <div style="margin-top: 15px; font-size: 12px; color: gray;">Default: admin / admin123</div>
+    </div>
+
+    <div id="adminDashSection" class="dashboard hidden">
+        <div class="dash-header">
+            <h2>🛡️ Super Admin Control Panel (<span id="loggedInAdminRole">admin (Super-Admin)</span>)</h2>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-app" onclick="goToPublicApp()">🌐 Open DesiAdda Feed (Public App)</button>
+                <button class="btn-red" onclick="adminLogout()">Log Out</button>
+            </div>
+        </div>
+
+        <div class="admin-nav">
+            <button id="navStats" class="active" onclick="switchAdminTab('stats')">📊 Analytics</button>
+            <button id="navUsers" onclick="switchAdminTab('users')">👥 Users</button>
+            <button id="navMonetization" onclick="switchAdminTab('monetization')">💰 Monetization</button>
+            <button id="navBranding" onclick="switchAdminTab('branding')">⚙️ Logo</button>
+            <button id="navSecurity" onclick="switchAdminTab('security')">🔑 Credentials</button>
+        </div>
+
+        <div id="tabStats" class="section-box active">
+            <h3>Website Usage & Traffic Analytics</h3>
+            <div class="stats-grid" style="margin-top: 15px;">
+                <div class="stat-card">
+                    <p style="font-size:13px; color:gray;">Total Registered Users</p>
+                    <h3 id="statTotalUsers">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p style="font-size:13px; color:gray;">Total Active Posts</p>
+                    <h3 id="statTotalPosts">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p style="font-size:13px; color:gray;">Total Uploaded Reels</p>
+                    <h3 id="statTotalReels">0</h3>
+                </div>
+                <div class="stat-card">
+                    <p style="font-size:13px; color:gray;">Active Server Status</p>
+                    <h3 style="color: green;">🟢 Online</h3>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabUsers" class="section-box">
+            <h3>Registered Users Control</h3>
+            <div id="adminUserList" style="margin-top: 15px;">Loading users...</div>
+        </div>
+
+        <div id="tabMonetization" class="section-box">
+            <h3>Monetization & Feature Control</h3>
+            <div style="background: #fafafa; padding: 20px; border: 1px solid #dbdbdb; border-radius: 6px; margin: 15px 0; max-width: 500px;">
+                <div id="monetizeSuccess" class="success-msg"></div>
+                <div style="margin-bottom: 15px; border-bottom: 1px solid #dbdbdb; padding-bottom: 15px;">
+                    <h4>⭐ Paid Verified Badge (Blue Tick)</h4>
+                    <label style="display:flex; align-items:center; gap:8px; margin:8px 0; font-size:13px; cursor:pointer;">
+                        <input type="checkbox" id="badgeEnabledCheck" style="width:16px; height:16px;"> Enable Paid Blue Tick Feature
+                    </label>
+                    <input type="number" id="badgePriceInput" placeholder="Price in INR (e.g. 149)" style="margin-top:5px;">
+                    <button class="btn" onclick="saveMonetization('verifiedBadge', 'badgeEnabledCheck', 'badgePriceInput')">Save Blue Tick Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabBranding" class="section-box">
+            <h3>Website Logo & Title Control</h3>
+            <div style="background: #fafafa; padding: 20px; border: 1px solid #dbdbdb; border-radius: 6px; margin: 15px 0; max-width: 450px;">
+                <div id="logoSuccess" class="success-msg"></div>
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px;">Website Logo Text / Brand Name</label>
+                <input type="text" id="websiteLogoInput" placeholder="DesiAdda" style="margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px;">Image Logo Upload (PNG/JPG)</label>
+                <input type="file" id="logoImageFileInput" accept="image/*" style="margin-bottom: 10px; font-size: 12px;" onchange="previewLogoImage(event)">
+                <div style="margin-bottom: 15px; text-align: center;">
+                    <img id="currentLogoPreview" style="max-height: 50px; display: none; border-radius: 4px; border: 1px solid #dbdbdb;" alt="Logo Preview">
+                </div>
+                <button class="btn" onclick="updateWebsiteLogo()">Save Logo Settings</button>
+            </div>
+        </div>
+
+        <div id="tabSecurity" class="section-box">
+            <h3>Change Admin Credentials</h3>
+            <div style="background: #fafafa; padding: 15px; border: 1px solid #dbdbdb; border-radius: 6px; margin: 15px 0; max-width: 400px;">
+                <div id="secError" class="error-msg"></div>
+                <div id="secSuccess" class="success-msg"></div>
+                <label style="font-size: 12px; font-weight: bold;">New Username</label>
+                <input type="text" id="updateAdminUser" placeholder="New Username">
+                <label style="font-size: 12px; font-weight: bold;">New Password (Optional)</label>
+                <input type="password" id="updateAdminPass" placeholder="New Password">
+                <button class="btn" onclick="updateAdminCredentials()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAdmin = localStorage.getItem("adminUsername") || "admin";
+        let selectedLogoImageBase64 = "";
+
+        function previewLogoImage(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = e => {
+                selectedLogoImageBase64 = e.target.result;
+                let preview = document.getElementById('currentLogoPreview');
+                preview.src = selectedLogoImageBase64;
+                preview.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function adminLogin() {
+            let username = document.getElementById('adminUser').value.trim();
+            let password = document.getElementById('adminPass').value;
+            let errorBox = document.getElementById('adminLoginError');
+            errorBox.innerText = "";
+            if(!username || !password) return errorBox.innerText = "Sabhi fields bharein!";
+
+            let res = await fetch('http://localhost:3000/admin/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            let data = await res.json();
+            if(res.ok && data.success) {
+                localStorage.setItem("isAdminLoggedIn", "true");
+                localStorage.setItem("adminUsername", data.username);
+                localStorage.setItem("adminRole", data.role || "Super-Admin");
+                localStorage.setItem("loggedInUser", data.username);
+                currentAdmin = data.username;
+                loadAdminDashboard();
+            } else {
+                errorBox.innerText = data.message || "Login fail ho gaya!";
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem("isAdminLoggedIn");
+            localStorage.removeItem("adminUsername");
+            localStorage.removeItem("adminRole");
+            document.getElementById('adminDashSection').classList.add('hidden');
+            document.getElementById('adminLoginSection').classList.remove('hidden');
+        }
+
+        function goToPublicApp() {
+            localStorage.setItem("loggedInUser", currentAdmin);
+            window.location.href = "index.html";
+        }
+
+        function switchAdminTab(tab) {
+            ['stats', 'users', 'monetization', 'branding', 'security'].forEach(t => {
+                let btn = document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1));
+                if(btn) btn.classList.toggle('active', t === tab);
+                let box = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if(box) box.classList.toggle('active', t === tab);
+            });
+            if(tab === 'stats') loadAnalyticsStats();
+            if(tab === 'monetization') loadMonetizationSettings();
+        }
+
+        async function loadAdminDashboard() {
+            document.getElementById('adminLoginSection').classList.add('hidden');
+            document.getElementById('adminDashSection').classList.remove('hidden');
+            loadAnalyticsStats();
+            loadUsersList();
+            loadLogoSetting();
+        }
+
+        async function loadAnalyticsStats() {
+            let uRes = await fetch('http://localhost:3000/admin/users');
+            let users = await uRes.json();
+            document.getElementById('statTotalUsers').innerText = users.length;
+            let pRes = await fetch('http://localhost:3000/posts');
+            let posts = await pRes.json();
+            document.getElementById('statTotalPosts').innerText = posts.length;
+            let rRes = await fetch('http://localhost:3000/reels');
+            let reels = await rRes.json();
+            document.getElementById('statTotalReels').innerText = reels.length;
+        }
+
+        async function loadUsersList() {
+            let res = await fetch('http://localhost:3000/admin/users');
+            let users = await res.json();
+            let container = document.getElementById('adminUserList');
+            container.innerHTML = "";
+            users.forEach(u => {
+                container.innerHTML += `
+                    <div class="user-row">
+                        <div class="user-info">
+                            <img src="${u.profilePic}">
+                            <div><strong>${u.username}</strong> ${u.isVerified ? '✔' : ''}</div>
+                        </div>
+                        <button class="btn-red" onclick="deleteUser('${u.username}')">Delete</button>
+                    </div>`;
+            });
+        }
+
+        async function deleteUser(username) {
+            if(!confirm(`Delete @${username}?`)) return;
+            await fetch(`http://localhost:3000/admin/user/${username}`, { method: 'DELETE' });
+            loadUsersList();
+        }
+
+        async function loadMonetizationSettings() {
+            let res = await fetch('http://localhost:3000/admin/monetization');
+            let data = await res.json();
+            data.forEach(item => {
+                if(item.key === 'verifiedBadge') {
+                    document.getElementById('badgeEnabledCheck').checked = item.enabled;
+                    document.getElementById('badgePriceInput').value = item.price;
+                }
+            });
+        }
+
+        async function saveMonetization(key, checkId, priceId) {
+            let enabled = document.getElementById(checkId).checked;
+            let price = Number(document.getElementById(priceId).value);
+            let res = await fetch('http://localhost:3000/admin/monetization/update', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, enabled, price })
+            });
+            let data = await res.json();
+            if(res.ok) document.getElementById('monetizeSuccess').innerText = data.message;
+        }
+
+        async function loadLogoSetting() {
+            let res = await fetch('http://localhost:3000/settings/logo');
+            let data = await res.json();
+            document.getElementById('websiteLogoInput').value = data.logoText || '';
+            if(data.logoImg) {
+                selectedLogoImageBase64 = data.logoImg;
+                let preview = document.getElementById('currentLogoPreview');
+                preview.src = data.logoImg;
+                preview.style.display = 'inline-block';
+            }
+        }
+
+        async function updateWebsiteLogo() {
+            let logoText = document.getElementById('websiteLogoInput').value.trim();
+            let res = await fetch('http://localhost:3000/admin/settings/logo', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ logoText, logoImg: selectedLogoImageBase64 })
+            });
+            let data = await res.json();
+            if(res.ok) document.getElementById('logoSuccess').innerText = data.message;
+        }
+
+        async function updateAdminCredentials() {
+            let newUsername = document.getElementById('updateAdminUser').value.trim();
+            let newPassword = document.getElementById('updateAdminPass').value;
+            let res = await fetch('http://localhost:3000/admin/update-credentials', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldUsername: currentAdmin, newUsername, newPassword })
+            });
+            let data = await res.json();
+            if(res.ok) {
+                document.getElementById('secSuccess').innerText = data.message;
+                localStorage.setItem("adminUsername", data.newUsername);
+                currentAdmin = data.newUsername;
+            }
+        }
+
+        window.onload = () => {
+            if(localStorage.getItem("isAdminLoggedIn") === "true") loadAdminDashboard();
+        };
+    </script>
+</body>
+</html>

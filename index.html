@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">DesiAdda - Ultimate Social</title>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease; }
+        
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #1a1a1a;
+            --border-color: #eaeaea;
+            --subtext-color: #737373;
+            --input-bg: #f1f3f5;
+            --accent-gradient: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            --shadow-subtle: 0 8px 30px rgba(0,0,0,0.04);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+        }
+        body.dark-mode {
+            --bg-color: #0b0b0b;
+            --card-bg: #161616;
+            --text-color: #f3f3f3;
+            --border-color: #262626;
+            --subtext-color: #9a9a9a;
+            --input-bg: #222222;
+            --shadow-subtle: 0 8px 30px rgba(0,0,0,0.4);
+            --glass-bg: rgba(22, 22, 22, 0.85);
+        }
+
+        body { background-color: var(--bg-color); color: var(--text-color); }
+        
+        header { position: sticky; top: 0; background: var(--glass-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; z-index: 100; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .logo { font-family: 'Brush Script MT', cursive; font-size: 34px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; font-weight: bold; cursor: pointer; letter-spacing: 0.5px; }
+        .nav-icons span { margin-left: 10px; font-size: 17px; cursor: pointer; padding: 7px; border-radius: 50%; position: relative; background: var(--input-bg); }
+        .nav-icons span:hover { transform: scale(1.08); background: var(--border-color); }
+        
+        .notification-badge { position: absolute; top: 0px; right: 0px; background: #ed4956; color: white; font-size: 9px; padding: 2px 5px; border-radius: 50%; font-weight: bold; }
+
+        .container { max-width: 500px; margin: 24px auto; padding: 0 12px; }
+        
+        .trending-ticker { background: var(--card-bg); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 12px; display: flex; gap: 10px; overflow-x: auto; align-items: center; box-shadow: var(--shadow-subtle); }
+        .trending-tag { background: var(--input-bg); padding: 5px 12px; border-radius: 20px; cursor: pointer; color: #0095f6; font-weight: bold; }
+
+        .explore-categories { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; }
+        .explore-cat-btn { padding: 8px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; color: var(--text-color); box-shadow: var(--shadow-subtle); }
+        .explore-cat-btn.active { background: var(--accent-gradient); color: white; border: none; }
+
+        .search-bar { position: relative; }
+        .search-bar input { padding: 9px 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); outline: none; width: 150px; font-size: 13px; }
+        .search-results, .mention-dropdown, .location-dropdown { position: absolute; top: 100%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; max-height: 220px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-top: 4px; }
+        .search-item, .user-list-item, .notif-item, .mention-item, .location-item { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border-color); cursor: pointer; background: var(--card-bg); font-size: 13px; }
+        .search-item:hover, .user-list-item:hover, .notif-item:hover, .mention-item:hover, .location-item:hover { background: var(--input-bg); }
+        .search-item img, .user-list-item img, .mention-item img { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; object-fit: cover; }
+        
+        .online-dot { width: 10px; height: 10px; background-color: #00c853; border-radius: 50%; display: inline-block; margin-left: 6px; border: 2px solid var(--card-bg); }
+        .verified-badge { color: #0095f6; font-size: 13px; margin-left: 4px; display: inline-block; vertical-align: middle; }
+        .highlight-tag { color: #00376b; font-weight: 500; cursor: pointer; }
+        body.dark-mode .highlight-tag { color: #4cb5f5; }
+
+        .stories-container { display: flex; gap: 14px; padding: 15px; overflow-x: auto; background: var(--card-bg); border: 1px solid var(--border-color); margin-bottom: 24px; border-radius: 16px; box-shadow: var(--shadow-subtle); }
+        .story-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 72px; }
+        .story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: var(--accent-gradient); display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(220, 39, 67, 0.25); }
+        .story-ring img { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2px solid var(--card-bg); }
+        .story-item span { font-size: 11px; margin-top: 6px; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 72px; font-weight: 500; }
+        .add-story-btn { width: 62px; height: 62px; border-radius: 50%; border: 2px dashed var(--border-color); display: flex; justify-content: center; align-items: center; font-size: 24px; color: #0095f6; background: var(--input-bg); }
+
+        /* Story Book Styles */
+        .book-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+        .book-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; cursor: pointer; box-shadow: var(--shadow-subtle); display: flex; flex-direction: column; }
+        .book-card img { width: 100%; height: 180px; object-fit: cover; }
+        .book-card-info { padding: 12px; }
+        .book-card-info h4 { font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .book-card-info p { font-size: 11px; color: var(--subtext-color); }
+
+        .highlights-container { display: flex; gap: 16px; padding: 10px 0; margin-bottom: 20px; overflow-x: auto; }
+        .highlight-circle { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .highlight-circle img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e6683c; padding: 2px; }
+        .highlight-circle span { font-size: 11px; margin-top: 6px; font-weight: 500; }
+
+        .suggestions-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; box-shadow: var(--shadow-subtle); }
+        .suggestions-header { font-size: 13px; font-weight: bold; color: var(--subtext-color); margin-bottom: 12px; display: flex; justify-content: space-between; }
+        .suggestion-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .suggestion-user { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .suggestion-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+
+        .post-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 24px; overflow: hidden; position: relative; box-shadow: var(--shadow-subtle); }
+        .post-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+        .post-user-info { display: flex; align-items: center; cursor: pointer; }
+        .post-header img { width: 36px; height: 36px; border-radius: 50%; margin-right: 12px; object-fit: cover; }
+        
+        .media-container { position: relative; width: 100%; background: #000; display: flex; justify-content: center; align-items: center; user-select: none; }
+        .uploaded-media { width: 100%; max-height: 520px; object-fit: cover; }
+        
+        .like-animation { position: absolute; font-size: 90px; color: #ed4956; animation: popHeart 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: none; z-index: 10; }
+        @keyframes popHeart {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        .interaction-bar { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .action-btn { background: none; border: none; font-size: 18px; cursor: pointer; font-weight: bold; color: var(--text-color); margin-right: 15px; }
+        .action-btn.liked { color: #ed4956; }
+        
+        .comment-input-box { display: flex; margin-top: 10px; }
+        .comment-input-box input { flex: 1; border: none; outline: none; font-size: 13px; background: transparent; color: var(--text-color); }
+        .comment-input-box button { background: none; border: none; color: #0095f6; font-weight: bold; cursor: pointer; }
+        
+        .create-post { background: var(--card-bg); padding: 16px; border: 1px solid var(--border-color); margin-bottom: 24px; border-radius: 16px; box-shadow: var(--shadow-subtle); }
+        .create-post textarea { width: 100%; border: none; outline: none; resize: none; font-size: 14px; margin-bottom: 12px; background: transparent; color: var(--text-color); }
+        
+        .poll-box { margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px; }
+        .poll-option { background: var(--input-bg); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; }
+        .poll-option:hover { background: var(--border-color); }
+
+        .reel-card { background: #000; border-radius: 16px; margin-bottom: 25px; overflow: hidden; position: relative; height: 78vh; display: flex; flex-direction: column; justify-content: center; box-shadow: var(--shadow-subtle); }
+        .reel-video { width: 100%; height: 100%; object-fit: cover; }
+        .reel-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 24px; background: linear-gradient(transparent, rgba(0,0,0,0.85)); color: #fff; display: flex; justify-content: space-between; align-items: flex-end; }
+        
+        .chat-container { display: flex; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; height: 78vh; overflow: hidden; box-shadow: var(--shadow-subtle); }
+        .chat-sidebar { width: 35%; border-right: 1px solid var(--border-color); overflow-y: auto; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; }
+        .chat-header-bar { padding: 14px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); }
+        .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .message-bubble { max-width: 65%; padding: 12px 16px; border-radius: 18px; font-size: 14px; word-break: break-word; }
+        .message-bubble.sent { background: #0095f6; color: white; align-self: flex-end; }
+        .message-bubble.received { background: var(--input-bg); color: var(--text-color); align-self: flex-start; }
+        .chat-input-area { padding: 14px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background: var(--card-bg); align-items: center; }
+        .chat-input-area input { flex: 1; padding: 11px 18px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); border-radius: 24px; outline: none; }
+        .typing-indicator { font-size: 11px; color: var(--subtext-color); padding: 4px 16px; font-style: italic; }
+
+        .profile-header { display: flex; align-items: center; margin-bottom: 24px; padding: 0 10px; }
+        .profile-pic-container { flex: 1; display: flex; justify-content: center; }
+        .profile-pic-container img { width: 115px; height: 115px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-color); cursor: pointer; padding: 2px; }
+        .profile-info { flex: 2; padding-left: 20px; }
+        .profile-info-top { display: flex; align-items: center; margin-bottom: 12px; }
+        
+        .profile-tabs { display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 15px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .profile-tab { padding: 14px; flex: 1; text-align: center; color: var(--subtext-color); }
+        .profile-tab.active { color: var(--text-color); border-bottom: 2px solid var(--text-color); }
+
+        .btn-gray { padding: 8px 18px; font-weight: bold; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-color); font-size: 13px; }
+        .btn-blue { padding: 8px 18px; font-weight: bold; background: #0095f6; border: none; border-radius: 8px; cursor: pointer; color: white; font-size: 13px; }
+        
+        .profile-stats { display: flex; margin-bottom: 12px; font-size: 14px; gap: 20px; }
+        .profile-stats span { cursor: pointer; }
+        
+        .profile-bio { font-size: 13px; line-height: 1.5; }
+        .profile-bio strong { display: block; font-weight: bold; }
+        .profile-bio a { color: #00376b; text-decoration: none; font-weight: bold; }
+        body.dark-mode .profile-bio a { color: #4cb5f5; }
+        
+        .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding-top: 5px; }
+        .grid-item { position: relative; padding-bottom: 100%; overflow: hidden; background: var(--input-bg); cursor: pointer; border-radius: 4px; }
+        .grid-item img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
+        .settings-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; box-shadow: var(--shadow-subtle); }
+        .settings-item { padding: 16px 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer; }
+        .settings-item:hover { background: var(--input-bg); }
+
+        .app-footer { margin-top: 40px; padding: 24px 0; text-align: center; }
+        .footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; }
+        .footer-links a { color: var(--subtext-color); font-size: 11px; text-decoration: none; cursor: pointer; }
+        .footer-links a:hover { text-decoration: underline; }
+        .copyright { color: var(--subtext-color); font-size: 11px; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .modal-box { background: var(--card-bg); color: var(--text-color); width: 380px; border-radius: 16px; padding: 24px; text-align: center; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .modal-box input, .modal-box textarea, .modal-box select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); border-radius: 8px; outline: none; }
+        .save-btn { width: 100%; background: #0095f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .close-post-btn { position: absolute; top: 14px; right: 18px; font-size: 24px; cursor: pointer; font-weight: bold; color: var(--text-color); z-index: 10; }
+
+        #viewPostModal .modal-box { width: 95%; max-width: 900px; height: 82vh; display: flex; padding: 0; overflow: hidden; border-radius: 16px; }
+        .modal-left-media { flex: 1.3; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .modal-left-media img { width: 100%; height: 100%; object-fit: contain; }
+        .modal-right-content { flex: 1; display: flex; flex-direction: column; border-left: 1px solid var(--border-color); text-align: left; height: 100%; }
+        .modal-right-header { padding: 14px 18px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+        .modal-right-header img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+        .modal-comments-area { flex: 1; overflow-y: auto; padding: 14px 18px; }
+
+        .story-modal { background: #000; flex-direction: column; }
+        .story-header { display: flex; align-items: center; padding: 16px; color: #fff; width: 100%; max-width: 440px; justify-content: space-between; }
+        .story-image-container { width: 100%; max-width: 440px; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #000; position: relative; }
+        .story-image-container img { width: 100%; max-height: 75vh; object-fit: contain; }
+        .story-caption-overlay { position: absolute; bottom: 24px; background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; backdrop-filter: blur(4px); }
+        .story-music-player { position: absolute; top: 20px; background: rgba(0,0,0,0.75); padding: 8px 16px; border-radius: 20px; font-size: 12px; color: #fff; backdrop-filter: blur(4px); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body onclick="hideSearch()">
+
+    <header>
+        <a href="#" class="logo" id="brandLogoText" onclick="showHome()">DesiAdda</a>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search..." onkeyup="searchUsers(event)" onclick="event.stopPropagation()">
+            <div id="searchResults" class="search-results hidden"></div>
+        </div>
+
+        <div class="nav-icons">
+            <span onclick="showHome()" title="Home">🏠</span>
+            <span onclick="showExplore()" title="Explore">🔍</span>
+            <span onclick="showStoryBooks()" title="Story Books">📖</span>
+            <span onclick="showReels()" title="Reels">🎬</span>
+            <span onclick="showMessages()" title="Messages">💬</span>
+            <span onclick="showConfessionsWall()" title="Whisper Wall">🤫</span>
+            <span onclick="openUtilityModal()" title="Utility Hub">🧰</span>
+            <span onclick="visitProfile(currentUser)" title="Profile">👤</span>
+            <span onclick="showNotifications()" title="Notifications">🔔<span id="notifBadge" class="notification-badge hidden">0</span></span>
+            <span onclick="toggleDarkMode()" id="themeToggleIcon" title="Toggle Theme">🌙</span>
+            <span onclick="logout()" title="Logout">🚪</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Live Trending Hashtags Ticker -->
+        <div class="trending-ticker" id="trendingTicker">
+            <span style="font-weight:bold; color:var(--subtext-color);">🔥 Trending:</span>
+            <div id="trendingTagsList" style="display:flex; gap:8px;"></div>
+        </div>
+
+        <div id="homeSection">
+            <div class="stories-container" id="storiesContainer"></div>
+            
+            <div class="suggestions-box" id="suggestionsBox">
+                <div class="suggestions-header"><span>Suggestions For You</span></div>
+                <div id="suggestionsList">Loading suggestions...</div>
+            </div>
+
+            <div class="create-post" style="position: relative;">
+                <textarea id="postInput" rows="2" placeholder="Kuch share karein (#tag, @mention)..." oninput="handleMentionInput(event)"></textarea>
+                <div id="mentionDropdown" class="mention-dropdown hidden"></div>
+
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <select id="postCategorySelect" style="flex:1; padding:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:13px;">
+                        <option value="Desi">🌿 Desi Vibe</option>
+                        <option value="Memes">😂 Memes</option>
+                        <option value="Tech">💻 Tech & Code</option>
+                        <option value="Travel">✈️ Travel & Nature</option>
+                    </select>
+                    <input type="text" id="postLocationInput" placeholder="📍 Location" style="flex:1; padding:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:13px;" autocomplete="off" oninput="handleLocationInput(event)">
+                </div>
+                <div id="locationDropdown" class="location-dropdown hidden"></div>
+
+                <div id="pollCreatorBox" class="hidden" style="margin-bottom: 10px;">
+                    <input type="text" id="pollQuestionInput" placeholder="Poll question (e.g., Best food?)" style="width:100%; padding:10px; margin-bottom:8px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:13px;">
+                    <input type="text" id="pollOpt1" placeholder="Option 1" style="width:48%; padding:8px; display:inline-block; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:12px;">
+                    <input type="text" id="pollOpt2" placeholder="Option 2" style="width:48%; padding:8px; display:inline-block; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:12px; float:right;">
+                </div>
+
+                <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="previewPostImage(event)">
+                <img id="imagePreview" style="display:none; width:100%; margin-bottom:12px; border-radius:8px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-gray" onclick="document.getElementById('imageInput').click()">📷 Photo</button>
+                    <button class="btn-gray" onclick="togglePollCreator()">📊 Poll</button>
+                    <button class="btn-gray" style="background: var(--accent-gradient); color: white; border: none;" onclick="generateAiCaption()">✨ AI Assist</button>
+                    <button class="btn-blue" style="flex: 1;" onclick="addPost()">Post</button>
+                </div>
+            </div>
+            <div id="feed">Loading posts...</div>
+        </div>
+
+        <!-- Story Book Library Section -->
+        <div id="storyBooksSection" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h2 style="font-weight: 500;">📖 Community Story Books</h2>
+                <button class="btn-blue" onclick="openWriteBookModal()" style="font-size:12px; padding:6px 12px;">✍️ Write Book</button>
+            </div>
+            
+            <div class="explore-categories">
+                <button class="explore-cat-btn active" onclick="loadStoryBooks('All', this)">🌟 All Books</button>
+                <button class="explore-cat-btn" onclick="loadStoryBooks('Desi Romance', this)">❤️ Romance</button>
+                <button class="explore-cat-btn" onclick="loadStoryBooks('Thriller', this)">🔍 Thriller</button>
+                <button class="explore-cat-btn" onclick="loadStoryBooks('Comedy', this)">😂 Comedy</button>
+                <button class="explore-cat-btn" onclick="loadStoryBooks('Sci-Fi', this)">🚀 Sci-Fi</button>
+                <button class="explore-cat-btn" onclick="loadStoryBooks('Horror', this)">👻 Horror</button>
+            </div>
+
+            <div class="book-grid" id="storyBooksGrid">Loading 1000+ library books...</div>
+        </div>
+
+        <!-- Read Book Reader Modal -->
+        <div id="readBookModal" class="modal-overlay hidden" onclick="document.getElementById('readBookModal').classList.add('hidden')">
+            <div class="modal-box" onclick="event.stopPropagation()" style="width: 90%; max-width: 600px; height: 80vh; text-align: left; display:flex; flex-direction:column;">
+                <span class="close-post-btn" onclick="document.getElementById('readBookModal').classList.add('hidden')">×</span>
+                <h2 id="readerBookTitle" style="margin-bottom:4px; font-size:18px;">Book Title</h2>
+                <p id="readerBookAuthor" style="font-size:12px; color:var(--subtext-color); margin-bottom:12px;">Author</p>
+                
+                <div style="display:flex; gap:8px; margin-bottom:12px;">
+                    <select id="chapterSelect" onchange="switchChapter(this.value)" style="flex:1; padding:6px; font-size:12px;"></select>
+                </div>
+
+                <div id="readerContentBox" style="flex:1; overflow-y:auto; font-size:14px; line-height:1.6; padding:10px; background:var(--input-bg); border-radius:8px;"></div>
+                
+                <div style="margin-top:12px; border-top:1px solid var(--border-color); padding-top:8px; display:flex; gap:8px;">
+                    <button class="btn-gray" onclick="openAddChapterModal()" style="font-size:11px; flex:1;">+ Add Next Chapter</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Write New Book Modal -->
+        <div id="writeBookModal" class="modal-overlay hidden">
+            <div class="modal-box" style="text-align: left; width: 420px;">
+                <span class="close-post-btn" onclick="document.getElementById('writeBookModal').classList.add('hidden')">×</span>
+                <h3 style="text-align:center; margin-bottom:14px;">Publish New Story Book</h3>
+                <label style="font-size:11px; font-weight:bold;">Book Title</label>
+                <input type="text" id="newBookTitle" placeholder="Book Title">
+                <label style="font-size:11px; font-weight:bold;">Genre</label>
+                <select id="newBookGenre">
+                    <option value="Desi Romance">Desi Romance</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Sci-Fi">Sci-Fi</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Drama">Drama</option>
+                </select>
+                <label style="font-size:11px; font-weight:bold;">Synopsis / Summary</label>
+                <textarea id="newBookSynopsis" rows="2" placeholder="Book ki kahani ka saransh..."></textarea>
+                <label style="font-size:11px; font-weight:bold;">Chapter 1 Title</label>
+                <input type="text" id="newBookChapTitle" placeholder="e.g. Chapter 1: Shuruat">
+                <label style="font-size:11px; font-weight:bold;">Chapter 1 Content</label>
+                <textarea id="newBookChapContent" rows="3" placeholder="Pehla chapter yahan likhein..."></textarea>
+                <button class="save-btn" onclick="publishNewBook()">Publish Book</button>
+            </div>
+        </div>
+
+        <div id="confessionsSection" class="hidden">
+            <h2 style="margin-bottom: 16px; font-weight: 500;">🤫 Whisper Wall & Confessions</h2>
+            <div class="create-post">
+                <textarea id="confessionInput" rows="3" placeholder="Apna secret confession ya dil ki baat likhein..."></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <select id="vibeSelect" style="padding:8px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); border-radius:8px; font-size:12px;">
+                        <option value="☕ Chill Vibe">☕ Chill Vibe</option>
+                        <option value="🥳 Party Mode">🥳 Party Mode</option>
+                        <option value="💻 Coding Mode">💻 Coding Mode</option>
+                        <option value="❤️ Heartbroken">❤️ Heartbroken</option>
+                        <option value="🔥 Motivated">🔥 Motivated</option>
+                    </select>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="anonymousCheck" style="width:15px; height:15px;">
+                        <label for="anonymousCheck" style="font-size:12px; font-weight:bold; cursor:pointer;">Post Anonymously</label>
+                    </div>
+                </div>
+                <button class="btn-blue" onclick="postConfession()" style="width:100%;">Post Whisper</button>
+            </div>
+            <div id="confessionsFeed">Loading confessions...</div>
+        </div>
+
+        <div id="exploreSection" class="hidden">
+            <h2 id="exploreTitle" style="margin-bottom: 12px; font-weight: 500;">Explore</h2>
+            <div class="explore-categories">
+                <button class="explore-cat-btn active" onclick="loadExploreCategory('All', this)">🌟 All</button>
+                <button class="explore-cat-btn" onclick="loadExploreCategory('Desi', this)">🌿 Desi Vibe</button>
+                <button class="explore-cat-btn" onclick="loadExploreCategory('Memes', this)">😂 Memes</button>
+                <button class="explore-cat-btn" onclick="loadExploreCategory('Tech', this)">💻 Tech</button>
+                <button class="explore-cat-btn" onclick="loadExploreCategory('Travel', this)">✈️ Travel</button>
+            </div>
+            <div class="grid-container" id="exploreGrid">Loading explore posts...</div>
+        </div>
+
+        <div id="reelsSection" class="hidden">
+            <div class="create-post" style="position: relative;">
+                <h3 style="font-size: 15px; margin-bottom: 10px;">Upload Reel</h3>
+                <input type="text" id="reelCaptionInput" placeholder="Reel caption (@mention)..." style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px;" oninput="handleReelMentionInput(event)">
+                <div id="reelMentionDropdown" class="mention-dropdown hidden"></div>
+
+                <div style="position: relative;">
+                    <input type="text" id="reelLocationInput" placeholder="📍 Location (e.g., Manali)" oninput="handleReelLocationInput(event)" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:8px; font-size:13px;" autocomplete="off">
+                    <div id="reelLocationDropdown" class="location-dropdown hidden"></div>
+                </div>
+
+                <input type="file" id="reelVideoInput" accept="video/*" style="margin-bottom:10px; font-size:13px;">
+                <button class="btn-blue" onclick="uploadReel()" style="width:100%;">Upload Reel</button>
+            </div>
+            <div id="reelsFeed">Loading reels...</div>
+        </div>
+
+        <div id="messagesSection" class="hidden">
+            <div class="chat-container">
+                <div class="chat-sidebar" id="chatSidebar">
+                    <h3 style="padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 15px;">Chats</h3>
+                    <div id="chatUserList"></div>
+                </div>
+                <div class="chat-main" id="chatMainArea">
+                    <div style="flex:1; display:flex; justify-content:center; align-items:center; color:var(--subtext-color);">
+                        <p style="font-size: 14px;">Kisi user ko select karke chat shuru karein.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileSection" class="hidden">
+            <div class="profile-header">
+                <div class="profile-pic-container">
+                    <img id="profPic" src="https://i.pravatar.cc/150" onclick="handleProfilePicClick()" title="Change story">
+                </div>
+                <div class="profile-info">
+                    <div class="profile-info-top">
+                        <h2 id="profUsername">username</h2>
+                        <span id="profVerifiedBadge" class="verified-badge hidden">✔</span>
+                        <div id="profileActionBtn" style="margin-left: 12px;"></div> 
+                    </div>
+                    <div class="profile-stats">
+                        <span><strong id="postCount">0</strong> posts</span>
+                        <span><strong id="followersCount">0</strong> followers</span>
+                        <span><strong id="followingCount">0</strong> following</span>
+                    </div>
+                    <div class="profile-bio">
+                        <strong id="profName">Full Name</strong>
+                        <span id="profBio">Bio here...</span>
+                        <div id="profWebsiteBox" style="margin-top: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlights-container" id="highlightsContainer">
+                <div class="highlight-circle" onclick="openAddHighlightModal()">
+                    <div style="width:60px; height:60px; border-radius:50%; border:2px dashed var(--border-color); display:flex; justify-content:center; align-items:center; font-size:22px; color:#0095f6;">+</div>
+                    <span>New</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 16px;">
+                <button class="btn-blue" id="verifyBadgePayBtn" style="background: var(--accent-gradient); display:none;" onclick="payForVerifiedBadge()">⭐ Get Verified (Blue Tick)</button>
+            </div>
+
+            <div class="profile-tabs">
+                <div class="profile-tab active" id="tabPosts" onclick="switchProfileTab('posts')">📷 Posts</div>
+                <div class="profile-tab" id="tabSaved" onclick="switchProfileTab('saved')">🔖 Saved</div>
+            </div>
+
+            <div class="grid-container" id="myPostsGrid"></div>
+
+            <div class="app-footer">
+                <div class="footer-links">
+                    <a>Meta</a><a>About</a><a>Blog</a><a>Jobs</a><a>Help</a><a>API</a><a>Privacy Policy</a><a>Terms & Conditions</a>
+                </div>
+                <div class="copyright">© 2026 DesiAdda from Anoop Singh</div>
+            </div>
+        </div>
+
+        <div id="notificationsSection" class="hidden">
+            <h2 style="margin-bottom: 16px; font-weight: 500;">Notifications</h2>
+            <div id="notifContainer" style="background:var(--card-bg); border:1px solid var(--border-color); border-radius:16px; overflow:hidden; box-shadow: var(--shadow-subtle);">
+                <p style="padding:24px; text-align:center; color:var(--subtext-color);">Loading notifications...</p>
+            </div>
+        </div>
+
+        <div id="settingsSection" class="hidden">
+            <h2 style="margin-bottom: 16px; font-weight: 500;">Settings</h2>
+            <div class="settings-container">
+                <div class="settings-item" onclick="openEditModal()">👤 Edit Profile & Website Link</div>
+                <div class="settings-item" onclick="shareProfile()">🔗 Share Profile Link</div>
+                <div class="settings-item" onclick="requestVerification()">⭐ Request Verified Badge</div>
+                
+                <div class="settings-item">
+                    <span>🔔 Notification & Action Tone</span>
+                    <select id="soundToneSelect" onchange="updateSoundTone(this.value)" style="padding:6px; border:1px solid var(--border-color); background:var(--input-bg); color:var(--text-color); border-radius:6px; font-size:13px;">
+                        <option value="chime">Sweet Chime</option>
+                        <option value="pop">Soft Pop</option>
+                        <option value="silent">Silent (Mute)</option>
+                    </select>
+                </div>
+
+                <div class="settings-item" onclick="openChangePasswordModal()">🔑 Change Password</div>
+                <div class="settings-item" onclick="showNotifications()">🔔 Notifications List</div>
+                <div class="settings-item" style="color: #ed4956;" onclick="logout()">🚪 Log Out</div>
+            </div>
+
+            <div class="app-footer">
+                <div class="footer-links">
+                    <a>Meta</a><a>About</a><a>Blog</a><a>Jobs</a><a>Help</a><a>API</a><a>Privacy Policy</a><a>Terms & Conditions</a>
+                </div>
+                <div class="copyright">© 2026 DesiAdda from Anoop Singh</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="utilityModal" class="modal-overlay hidden" onclick="closeUtilityModal()">
+        <div class="modal-box" onclick="event.stopPropagation()" style="width: 420px; text-align: left;">
+            <span class="close-post-btn" onclick="closeUtilityModal()">×</span>
+            <h3 style="text-align: center; margin-bottom: 16px;">🧰 Mini Utility Hub</h3>
+            
+            <div style="margin-bottom: 16px;">
+                <h4 style="font-size: 13px; margin-bottom: 8px;">📝 Quick To-Do Notes</h4>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <input type="text" id="todoInput" placeholder="Naya task likhein..." style="margin-bottom:0; font-size:12px;">
+                    <button class="btn-blue" onclick="addTodoTask()" style="padding:6px 14px; font-size:12px;">Add</button>
+                </div>
+                <div id="todoListContainer" style="max-height:120px; overflow-y:auto; font-size:12px;"></div>
+            </div>
+
+            <div style="margin-bottom: 16px; border-top:1px solid var(--border-color); padding-top:12px;">
+                <h4 style="font-size: 13px; margin-bottom: 8px;">🎵 Chill Radio Player</h4>
+                <audio controls src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" style="width:100%; height:34px;"></audio>
+            </div>
+
+            <div style="border-top:1px solid var(--border-color); padding-top:12px;">
+                <h4 style="font-size: 13px; margin-bottom: 8px;">🤖 AI Quick Ask</h4>
+                <input type="text" id="hubAiInput" placeholder="AI se kuch bhi puchein..." style="margin-bottom:8px; font-size:12px;">
+                <button class="save-btn" onclick="askHubAi()" style="font-size:12px; padding:8px;">Ask AI</button>
+                <p id="hubAiOutput" style="font-size:12px; color:var(--subtext-color); margin-top:8px; font-style:italic;"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="callModal" class="modal-overlay hidden">
+        <div class="modal-box" style="background:#111; color:#fff; width:460px; height:420px; display:flex; flex-direction:column; justify-content:space-between; padding:24px;">
+            <h3 id="callStatusText">Calling...</h3>
+            <div style="display:flex; justify-content:center; gap:20px; flex:1; align-items:center;">
+                <video id="localVideo" autoplay muted style="width:150px; height:190px; object-fit:cover; border-radius:12px; background:#222;"></video>
+                <video id="remoteVideo" autoplay style="width:250px; height:190px; object-fit:cover; border-radius:12px; background:#222;"></video>
+            </div>
+            <button class="btn-red" onclick="hangUpCall()" style="padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; background:#ed4956; color:white; border:none;">Hang Up 📴</button>
+        </div>
+    </div>
+
+    <div id="addHighlightModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <span class="close-post-btn" onclick="document.getElementById('addHighlightModal').classList.add('hidden')">×</span>
+            <h3>Add Story Highlight</h3>
+            <input type="text" id="highlightTitleInput" placeholder="Highlight Title (e.g. Vacation)">
+            <input type="file" id="highlightImageInput" accept="image/*" style="margin-bottom:12px; font-size:12px;">
+            <button class="save-btn" onclick="saveHighlight()">Add Highlight</button>
+        </div>
+    </div>
+
+    <div id="storyModal" class="modal-overlay story-modal hidden">
+        <span class="close-post-btn" style="color: #fff; z-index: 10;" onclick="closeStory()">×</span>
+        <div class="story-header">
+            <div style="display:flex; align-items:center; gap:10px; color:#fff;">
+                <img id="storyUserPic" style="width:34px; height:34px; border-radius:50%;">
+                <h4 id="storyUsername">username</h4>
+            </div>
+            <button class="btn-gray" style="font-size:11px; padding:4px 10px;" onclick="viewStoryViewers()">👀 Viewers</button>
+        </div>
+        <div class="story-image-container">
+            <div id="storyMusicPlayerBox" class="story-music-player hidden"></div>
+            <img id="storyImage">
+            <div id="storyCaption" class="story-caption-overlay hidden"></div>
+        </div>
+    </div>
+
+    <div id="storyViewersModal" class="modal-overlay hidden" onclick="closeStoryViewersModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <span class="close-post-btn" onclick="closeStoryViewersModal()">×</span>
+            <h3>Story Viewers</h3>
+            <div id="storyViewersList" style="margin-top:16px; max-height:220px; overflow-y:auto;">Loading...</div>
+        </div>
+    </div>
+
+    <div id="sharePostModal" class="modal-overlay hidden" onclick="closeShareModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <span class="close-post-btn" onclick="closeShareModal()">×</span>
+            <h3>Share Post to Chat</h3>
+            <div id="shareUserListContainer" style="margin-top:16px; max-height:220px; overflow-y:auto;">Loading...</div>
+        </div>
+    </div>
+
+    <div id="storyUploadModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <span class="close-post-btn" onclick="closeStoryUploadModal()">×</span>
+            <h3 style="margin-bottom: 14px; font-size: 16px;">Add to Story</h3>
+            <input type="text" id="storyCaptionInput" placeholder="Add text caption...">
+            <label style="font-size: 11px; font-weight: bold; display: block; text-align: left; margin-bottom: 6px;">🎵 Background Music</label>
+            <select id="storyMusicSelect">
+                <option value="">No Music</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">🎵 Lofi Beats (Desi Chill)</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">🎸 Romantic Instrumental</option>
+                <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">🔥 Party Club Mix</option>
+            </select>
+            <button class="save-btn" onclick="uploadStoryWithCaption()">Upload Story</button>
+        </div>
+    </div>
+
+    <div id="editProfileModal" class="modal-overlay hidden">
+        <div class="modal-box" style="text-align: left;">
+            <span class="close-post-btn" onclick="closeEditModal()">×</span>
+            <h3 style="text-align: center; margin-bottom: 16px;">Edit Profile</h3>
+            <div style="text-align: center;">
+                <input type="file" id="editPicInput" accept="image/*" style="display:none;" onchange="previewEditPic(event)">
+                <img id="editModalPic" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer; object-fit: cover;" onclick="document.getElementById('editPicInput').click()">
+            </div>
+            <br>
+            <label style="font-size:11px; font-weight:bold;">Name</label>
+            <input type="text" id="editNameInput" placeholder="Full Name">
+            <label style="font-size:11px; font-weight:bold;">Username</label>
+            <input type="text" id="editUsernameInput" placeholder="Username">
+            <label style="font-size:11px; font-weight:bold;">Bio</label>
+            <textarea id="editBioInput" rows="2" placeholder="Apna Bio likhein..."></textarea>
+            <label style="font-size:11px; font-weight:bold;">Website Link (URL)</label>
+            <input type="text" id="editWebsiteInput" placeholder="https://example.com">
+            
+            <div style="margin: 12px 0; display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="editPrivateCheckbox" style="width: 16px; height: 16px;">
+                <label for="editPrivateCheckbox" style="font-size: 13px; font-weight: bold; cursor: pointer;">🔒 Private Account</label>
+            </div>
+
+            <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="changePasswordModal" class="modal-overlay hidden">
+        <div class="modal-box" style="text-align: left;">
+            <span class="close-post-btn" onclick="closeChangePasswordModal()">×</span>
+            <h3 style="text-align: center; margin-bottom: 16px;">Change Password</h3>
+            <label style="font-size:11px; font-weight:bold;">Old Password</label>
+            <input type="password" id="oldPasswordInput" placeholder="Purana Password">
+            <label style="font-size:11px; font-weight:bold;">New Password</label>
+            <input type="password" id="newPasswordInput" placeholder="Naya Password">
+            <button class="save-btn" onclick="submitChangePassword()">Update Password</button>
+        </div>
+    </div>
+
+    <div id="viewPostModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <span class="close-post-btn" style="right: 18px; top: 14px; z-index: 10;" onclick="closeViewPostModal()">×</span>
+            <div id="viewPostContent" style="display: flex; width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+
+    <input type="file" id="storyInput" accept="image/*" style="display:none;" onchange="prepareStoryUpload(event)">
+    <input type="file" id="chatImageInput" accept="image/*" style="display:none;" onchange="sendChatImage(event)">
+
+    <script>
+        const socket = io('http://localhost:3000');
+        let selectedPostImage = null;
+        let selectedProfilePic = null;
+        let pendingStoryImage = null;
+        let currentUser = localStorage.getItem("loggedInUser");
+        let currentlyViewingProfile = currentUser; 
+        let profileUserData = null; 
+        let activeChatUser = null;
+        let activeStoryId = null;
+        let sharingPostId = null;
+        let currentProfileTab = 'posts';
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let activeStoryAudio = null;
+
+        let peerConnection;
+        let localStream;
+        const iceServers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        let currentOpenBook = null;
+        
+        const popularCities = ["Prayagraj", "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Varanasi", "Lucknow", "Manali", "Kasol", "Shimla", "Jaipur", "Goa", "Pune"];
+
+        if(!currentUser) window.location.href = "login.html";
+
+        socket.emit('user_online', currentUser);
+
+        function playNotificationTone(type = 'chime') {
+            let tonePref = localStorage.getItem(`soundTone_${currentUser}`) || 'chime';
+            if(tonePref === 'silent') return;
+
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if(tonePref === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                } else {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                }
+            } catch(e) {}
+        }
+
+        function updateSoundTone(val) {
+            localStorage.setItem(`soundTone_${currentUser}`, val);
+            playNotificationTone(val);
+        }
+
+        socket.on('receive_message', (msg) => {
+            playNotificationTone();
+            if (activeChatUser && ((msg.sender === currentUser && msg.receiver === activeChatUser) || (msg.sender === activeChatUser && msg.receiver === currentUser))) {
+                let msgBox = document.getElementById('chatMessagesBox');
+                if(msgBox) {
+                    let bubbleClass = msg.sender === currentUser ? 'sent' : 'received';
+                    let contentHTML = msg.audioUrl ? `<audio controls src="${msg.audioUrl}" style="max-width:200px;"></audio>` : (msg.imageUrl ? `<img src="${msg.imageUrl}" style="max-width:180px; border-radius:8px;">` : (msg.sharedPostId ? `<div style="border:1px solid var(--border-color); border-radius:6px; padding:6px; background:#000;"><img src="${msg.sharedPostId.image}" style="width:150px; border-radius:4px;"><p style="font-size:11px; color:#fff;">${msg.sharedPostId.content || ''}</p></div>` : msg.text));
+                    msgBox.innerHTML += `<div class="message-bubble ${bubbleClass}">${contentHTML}</div>`;
+                    msgBox.scrollTop = msgBox.scrollHeight;
+                }
+            }
+        });
+
+        socket.on('incoming_call', async (data) => {
+            playNotificationTone();
+            if(confirm(`Incoming ${data.callType} call from @${data.caller}. Accept karein?`)) {
+                document.getElementById('callModal').classList.remove('hidden');
+                document.getElementById('callStatusText').innerText = "Connecting call...";
+                localStream = await navigator.mediaDevices.getUserMedia({ video: data.callType === 'video', audio: true });
+                document.getElementById('localVideo').srcObject = localStream;
+
+                peerConnection = new RTCPeerConnection(iceServers);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.ontrack = e => { document.getElementById('remoteVideo').srcObject = e.streams[0]; };
+                peerConnection.onicecandidate = e => { if (e.candidate) socket.emit('ice_candidate', { targetUser: data.caller, candidate: e.candidate }); };
+
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('answer_call', { targetUser: data.caller, signal: answer });
+            }
+        });
+
+        socket.on('call_accepted', async (signal) => {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+            document.getElementById('callStatusText').innerText = "Call Connected";
+        });
+
+        socket.on('ice_candidate', async (candidate) => {
+            if(peerConnection) {
+                try { await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {}
+            }
+        });
+
+        socket.on('call_ended', () => {
+            hangUpCall();
+            alert("Call disconnected.");
+        });
+
+        async function startCall(callType) {
+            if(!activeChatUser) return;
+            document.getElementById('callModal').classList.remove('hidden');
+            document.getElementById('callStatusText').innerText = `Calling @${activeChatUser}...`;
+
+            localStream = await navigator.mediaDevices.getUserMedia({ video: callType === 'video', audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+
+            peerConnection = new RTCPeerConnection(iceServers);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.ontrack = e => { document.getElementById('remoteVideo').srcObject = e.streams[0]; };
+            peerConnection.onicecandidate = e => { if (e.candidate) socket.emit('ice_candidate', { targetUser: activeChatUser, candidate: e.candidate }); };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('call_user', { caller: currentUser, targetUser: activeChatUser, signal: offer, callType });
+        }
+
+        function hangUpCall() {
+            if(localStream) localStream.getTracks().forEach(t => t.stop());
+            if(peerConnection) peerConnection.close();
+            socket.emit('hang_up', { targetUser: activeChatUser });
+            document.getElementById('callModal').classList.add('hidden');
+        }
+
+        async function payForVerifiedBadge() {
+            let res = await fetch('http://localhost:3000/monetization/status');
+            let status = await res.json();
+            if(!status.verifiedBadge || !status.verifiedBadge.enabled) {
+                alert("Paid Blue Tick is currently disabled by admin.");
+                return;
+            }
+            let options = {
+                "key": "rzp_test_YOUR_KEY",
+                "amount": status.verifiedBadge.price * 100,
+                "currency": "INR",
+                "name": "DesiAdda",
+                "description": "Verified Badge Subscription",
+                "handler": async function (response) {
+                    playNotificationTone();
+                    let verifyRes = await fetch('http://localhost:3000/payment/verify-success', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: currentUser, type: 'verifiedBadge' })
+                    });
+                    let result = await verifyRes.json();
+                    alert(result.message);
+                    visitProfile(currentUser);
+                },
+                "theme": { "color": "#0095f6" }
+            };
+            let rzp = new Razorpay(options);
+            rzp.open();
+        }
+
+        async function loadTrendingHashtags() {
+            try {
+                let res = await fetch('http://localhost:3000/trending/hashtags');
+                let tags = await res.json();
+                let list = document.getElementById('trendingTagsList');
+                list.innerHTML = "";
+                tags.forEach(t => {
+                    list.innerHTML += `<span class="trending-tag" onclick="searchHashtag('${t.replace('#','')}')">${t}</span>`;
+                });
+            } catch(e) {}
+        }
+
+        // --- STORY BOOKS FUNCTIONS ---
+        function showStoryBooks() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.remove('hidden');
+            loadStoryBooks('All');
+        }
+
+        async function loadStoryBooks(genre, btnElement) {
+            if(btnElement) {
+                document.querySelectorAll('#storyBooksSection .explore-cat-btn').forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+            let res = await fetch(`http://localhost:3000/stories/books?genre=${genre}`);
+            let books = await res.json();
+            let grid = document.getElementById('storyBooksGrid');
+            grid.innerHTML = "";
+            if(books.length === 0) { grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>No books found.</p>"; return; }
+            books.forEach(b => {
+                let encBook = encodeURIComponent(JSON.stringify(b));
+                grid.innerHTML += `
+                    <div class="book-card" onclick="openBookReader('${encBook}')">
+                        <img src="${b.coverImage}">
+                        <div class="book-card-info">
+                            <h4>${b.title}</h4>
+                            <p>By @${b.author} • ${b.genre}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function openBookReader(encodedBook) {
+            let book = JSON.parse(decodeURIComponent(encodedBook));
+            currentOpenBook = book;
+            document.getElementById('readerBookTitle').innerText = book.title;
+            document.getElementById('readerBookAuthor').innerText = `By @${book.author} | ${book.genre}`;
+            
+            let select = document.getElementById('chapterSelect');
+            select.innerHTML = "";
+            book.chapters.forEach(c => {
+                select.innerHTML += `<option value="${c.chapterNumber}">Chapter ${c.chapterNumber}: ${c.title}</option>`;
+            });
+
+            document.getElementById('readerContentBox').innerText = book.chapters[0].content;
+            document.getElementById('readBookModal').classList.remove('hidden');
+        }
+
+        function switchChapter(chapNum) {
+            if(!currentOpenBook) return;
+            let chap = currentOpenBook.chapters.find(c => c.chapterNumber == chapNum);
+            if(chap) {
+                document.getElementById('readerContentBox').innerText = chap.content;
+            }
+        }
+
+        function openWriteBookModal() { document.getElementById('writeBookModal').classList.remove('hidden'); }
+
+        async function publishNewBook() {
+            let title = document.getElementById('newBookTitle').value.trim();
+            let genre = document.getElementById('newBookGenre').value;
+            let synopsis = document.getElementById('newBookSynopsis').value.trim();
+            let firstChapterTitle = document.getElementById('newBookChapTitle').value.trim();
+            let firstChapterContent = document.getElementById('newBookChapContent').value.trim();
+
+            if(!title || !synopsis || !firstChapterContent) return alert("Sabhi fields bharein!");
+
+            let res = await fetch('http://localhost:3000/stories/books/add', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, author: currentUser, genre, synopsis, firstChapterTitle, firstChapterContent })
+            });
+            let data = await res.json();
+            if(res.ok) {
+                alert(data.message);
+                document.getElementById('writeBookModal').classList.add('hidden');
+                loadStoryBooks('All');
+            }
+        }
+
+        function openAddChapterModal() {
+            let title = prompt("Naye Chapter ka Naam dalein:");
+            let content = prompt("Naye Chapter ka Content likhein:");
+            if(!title || !content || !currentOpenBook) return;
+
+            fetch(`http://localhost:3000/stories/books/${currentOpenBook._id}/chapter`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            }).then(res => res.json()).then(data => {
+                alert(data.message);
+                document.getElementById('readBookModal').classList.add('hidden');
+                loadStoryBooks('All');
+            });
+        }
+
+        function openAddHighlightModal() { document.getElementById('addHighlightModal').classList.remove('hidden'); }
+
+        async function saveHighlight() {
+            let title = document.getElementById('highlightTitleInput').value.trim();
+            let fileInput = document.getElementById('highlightImageInput').files[0];
+            if(!title || !fileInput) return alert("Title aur image dono zaroori hain!");
+            let reader = new FileReader();
+            reader.onload = async e => {
+                await fetch('http://localhost:3000/highlights/add', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, title, image: e.target.result })
+                });
+                document.getElementById('addHighlightModal').classList.add('hidden');
+                visitProfile(currentUser);
+            };
+            reader.readAsDataURL(fileInput);
+        }
+
+        function openUtilityModal() { document.getElementById('utilityModal').classList.remove('hidden'); loadTodoList(); }
+        function closeUtilityModal() { document.getElementById('utilityModal').classList.add('hidden'); }
+
+        function addTodoTask() {
+            let taskText = document.getElementById('todoInput').value.trim();
+            if(!taskText) return;
+            let tasks = JSON.parse(localStorage.getItem(`todos_${currentUser}`) || '[]');
+            tasks.push(taskText);
+            localStorage.setItem(`todos_${currentUser}`, JSON.stringify(tasks));
+            document.getElementById('todoInput').value = "";
+            loadTodoList();
+        }
+
+        function loadTodoList() {
+            let tasks = JSON.parse(localStorage.getItem(`todos_${currentUser}`) || '[]');
+            let container = document.getElementById('todoListContainer');
+            container.innerHTML = "";
+            if(tasks.length === 0) { container.innerHTML = "<p style='color:var(--subtext-color);'>Koi task nahi hai.</p>"; return; }
+            tasks.forEach((t, index) => {
+                container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);"><span>✓ ${t}</span><button onclick="removeTodoTask(${index})" style="background:none; border:none; color:red; cursor:pointer;">×</button></div>`;
+            });
+        }
+
+        function removeTodoTask(index) {
+            let tasks = JSON.parse(localStorage.getItem(`todos_${currentUser}`) || '[]');
+            tasks.splice(index, 1);
+            localStorage.setItem(`todos_${currentUser}`, JSON.stringify(tasks));
+            loadTodoList();
+        }
+
+        async function askHubAi() {
+            let query = document.getElementById('hubAiInput').value.trim();
+            if(!query) return;
+            document.getElementById('hubAiOutput').innerText = "AI soch raha hai...";
+            let res = await fetch('http://localhost:3000/ai/generate', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: query })
+            });
+            let data = await res.json();
+            if(res.ok) { document.getElementById('hubAiOutput').innerText = data.suggestion; }
+        }
+
+        async function generateAiCaption() {
+            let input = document.getElementById('postInput');
+            let promptText = input.value.trim();
+            input.placeholder = "🤖 AI is generating caption & hashtags...";
+            try {
+                let res = await fetch('http://localhost:3000/ai/generate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText })
+                });
+                let data = await res.json();
+                if(res.ok && data.success) { input.value = data.suggestion; }
+            } catch(err) { alert("AI Assistant unavailable!"); }
+            input.placeholder = "Kuch share karein (#tag, @mention)...";
+        }
+
+        function togglePollCreator() { document.getElementById('pollCreatorBox').classList.toggle('hidden'); }
+
+        async function votePoll(postId, optionIndex) {
+            playNotificationTone();
+            let res = await fetch(`http://localhost:3000/posts/${postId}/vote`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, optionIndex })
+            });
+            if(res.ok) { loadPosts(); }
+        }
+
+        async function toggleVoiceRecording() {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => { audioChunks.push(e.data); };
+                    mediaRecorder.onstop = async () => {
+                        let audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        let reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => {
+                            socket.emit('send_message', { sender: currentUser, receiver: activeChatUser, text: '[Voice Note]', audioUrl: reader.result });
+                        };
+                    };
+                    mediaRecorder.start();
+                    document.getElementById('micBtn').innerText = "🔴 Stop";
+                } catch(err) { alert("Microphone access denied!"); }
+            } else {
+                mediaRecorder.stop();
+                document.getElementById('micBtn').innerText = "🎤";
+            }
+        }
+
+        async function handleMentionInput(e) {
+            let text = e.target.value;
+            let dropdown = document.getElementById('mentionDropdown');
+            let lastWord = text.split(' ').pop();
+            if (lastWord.startsWith('@') && lastWord.length > 1) {
+                let res = await fetch(`http://localhost:3000/search/${lastWord.substring(1)}`);
+                let users = await res.json();
+                dropdown.innerHTML = "";
+                users.forEach(u => {
+                    dropdown.innerHTML += `<div class="mention-item" onclick="selectMention('@${u.username}', 'postInput', 'mentionDropdown')"><img src="${u.profilePic}"><strong>${u.username}</strong></div>`;
+                });
+                dropdown.classList.remove('hidden');
+            } else { dropdown.classList.add('hidden'); }
+        }
+
+        function selectMention(tag, inputId, dropdownId) {
+            let input = document.getElementById(inputId);
+            let words = input.value.split(' ');
+            words.pop();
+            words.push(tag + ' ');
+            input.value = words.join(' ');
+            document.getElementById(dropdownId).classList.add('hidden');
+            input.focus();
+        }
+
+        function handleLocationInput(e) {
+            let query = e.target.value.toLowerCase();
+            let dropdown = document.getElementById('locationDropdown');
+            if(query.length < 1) { dropdown.classList.add('hidden'); return; }
+            let filtered = popularCities.filter(c => c.toLowerCase().includes(query));
+            dropdown.innerHTML = "";
+            filtered.forEach(city => {
+                dropdown.innerHTML += `<div class="location-item" onclick="selectLocation('${city}', 'postLocationInput', 'locationDropdown')">📍 ${city}</div>`;
+            });
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectLocation(city, inputId, dropdownId) {
+            document.getElementById(inputId).value = city;
+            document.getElementById(dropdownId).classList.add('hidden');
+        }
+
+        async function fetchWebsiteLogo() {
+            try {
+                let res = await fetch('http://localhost:3000/settings/logo');
+                let data = await res.json();
+                let logoElement = document.getElementById('brandLogoText');
+                
+                if(data.logoImg) {
+                    logoElement.innerHTML = `<img src="${data.logoImg}" style="max-height: 38px; object-fit: contain; vertical-align: middle;" alt="Logo">`;
+                } else if(data.logoText) {
+                    logoElement.innerText = data.logoText;
+                    document.getElementById('pageTitle').innerText = `${data.logoText} - Ultimate Social`;
+                }
+            } catch(e) {}
+        }
+
+        async function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            let isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('themeToggleIcon').innerText = isDark ? '☀️' : '🌙';
+            
+            await fetch('http://localhost:3000/settings/darkmode', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, darkMode: isDark })
+            });
+        }
+
+        async function checkDarkModePreference() {
+            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let user = await res.json();
+            if(user.darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggleIcon').innerText = '☀️';
+            }
+            let savedTone = localStorage.getItem(`soundTone_${currentUser}`) || 'chime';
+            let toneSelect = document.getElementById('soundToneSelect');
+            if(toneSelect) toneSelect.value = savedTone;
+        }
+
+        function logout() { localStorage.removeItem("loggedInUser"); window.location.href = "login.html"; }
+
+        function shareProfile() {
+            navigator.clipboard.writeText(`https://desiadda.com/profile/${currentlyViewingProfile}`);
+            alert("🔗 Profile Link Copied!");
+        }
+
+        async function requestVerification() {
+            let res = await fetch('http://localhost:3000/request-verification', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser })
+            });
+            let data = await res.json();
+            alert(data.message);
+        }
+
+        function openChangePasswordModal() { document.getElementById('changePasswordModal').classList.remove('hidden'); }
+        function closeChangePasswordModal() { document.getElementById('changePasswordModal').classList.add('hidden'); }
+
+        async function submitChangePassword() {
+            let oldPassword = document.getElementById('oldPasswordInput').value;
+            let newPassword = document.getElementById('newPasswordInput').value;
+
+            if(!oldPassword || !newPassword) {
+                alert("Kripya purana aur naya password dono bharein!");
+                return;
+            }
+
+            let res = await fetch('http://localhost:3000/profile/change-password', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, oldPassword, newPassword })
+            });
+            
+            let data = await res.json();
+            if(res.ok && data.success) {
+                alert(data.message);
+                document.getElementById('oldPasswordInput').value = "";
+                document.getElementById('newPasswordInput').value = "";
+                closeChangePasswordModal();
+            } else {
+                alert(data.message || "Password change nahi ho paya!");
+            }
+        }
+
+        function formatContent(text) {
+            if(!text) return '';
+            return text.replace(/#(\w+)/g, '<span class="highlight-tag" onclick="searchHashtag(\'$1\')">#$1</span>').replace(/@(\w+)/g, '<span class="highlight-tag" onclick="visitProfile(\'$1\')">@$1</span>');
+        }
+
+        async function searchHashtag(tag) {
+            showExplore();
+            document.getElementById('exploreTitle').innerText = `#${tag} Posts`;
+            let res = await fetch(`http://localhost:3000/hashtag/${tag}`);
+            let posts = await res.json();
+            let grid = document.getElementById('exploreGrid');
+            grid.innerHTML = "";
+            if(posts.length === 0) { grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>No posts found for this hashtag.</p>"; return; }
+            posts.forEach(post => {
+                if(post.image) {
+                    let encodedPost = encodeURIComponent(JSON.stringify(post));
+                    grid.innerHTML += `<div class="grid-item" onclick="viewPostDetail('${encodedPost}', '${post.username}')"><img src="${post.image}"></div>`;
+                }
+            });
+        }
+
+        async function searchUsers(event) {
+            let query = document.getElementById('searchInput').value;
+            let resultsDiv = document.getElementById('searchResults');
+            if(query.length < 1) { resultsDiv.classList.add('hidden'); return; }
+            let res = await fetch(`http://localhost:3000/search/${query}`);
+            let users = await res.json();
+            resultsDiv.innerHTML = "";
+            users.forEach(u => {
+                let onlineBadge = u.isOnline ? `<span class="online-dot"></span>` : '';
+                resultsDiv.innerHTML += `<div class="search-item" onclick="visitProfile('${u.username}')"><img src="${u.profilePic}"><strong>${u.username}</strong> ${onlineBadge}</div>`;
+            });
+            resultsDiv.classList.remove('hidden');
+        }
+
+        function hideSearch() { document.getElementById('searchResults').classList.add('hidden'); }
+
+        function showHome() {
+            document.getElementById('homeSection').classList.remove('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            loadPosts(); loadStories(); loadSuggestions(); loadTrendingHashtags();
+        }
+
+        function showConfessionsWall() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.remove('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            loadConfessions();
+        }
+
+        async function postConfession() {
+            let text = document.getElementById('confessionInput').value.trim();
+            let vibe = document.getElementById('vibeSelect').value;
+            let isAnonymous = document.getElementById('anonymousCheck').checked;
+            if(!text) return alert("Kuch toh likhein!");
+
+            let res = await fetch('http://localhost:3000/confessions', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, vibe, isAnonymous, username: currentUser })
+            });
+            if(res.ok) {
+                playNotificationTone();
+                document.getElementById('confessionInput').value = "";
+                document.getElementById('anonymousCheck').checked = false;
+                loadConfessions();
+                alert("Whisper posted successfully!");
+            }
+        }
+
+        async function loadConfessions() {
+            let res = await fetch('http://localhost:3000/confessions');
+            let data = await res.json();
+            let feed = document.getElementById('confessionsFeed');
+            feed.innerHTML = "";
+            if(data.length === 0) { feed.innerHTML = "<p style='padding:20px; text-align:center; color:var(--subtext-color);'>Abhi koi confession nahi hai.</p>"; return; }
+            data.forEach(c => {
+                feed.innerHTML += `
+                    <div style="background:var(--card-bg); border:1px solid var(--border-color); padding:16px; border-radius:12px; margin-bottom:14px; box-shadow: var(--shadow-subtle);">
+                        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--subtext-color); margin-bottom:6px;">
+                            <strong>${c.username}</strong>
+                            <span style="background:var(--input-bg); padding:3px 10px; border-radius:12px;">${c.vibe}</span>
+                        </div>
+                        <p style="font-size:14px; line-height:1.4;">${c.text}</p>
+                    </div>`;
+            });
+        }
+
+        async function loadSuggestions() {
+            let res = await fetch(`http://localhost:3000/users/suggestions/${currentUser}`);
+            let users = await res.json();
+            let list = document.getElementById('suggestionsList');
+            list.innerHTML = "";
+            if(users.length === 0) { document.getElementById('suggestionsBox').classList.add('hidden'); return; }
+            document.getElementById('suggestionsBox').classList.remove('hidden');
+            users.forEach(u => {
+                let onlineBadge = u.isOnline ? `<span class="online-dot" style="width:8px; height:8px;"></span>` : '';
+                list.innerHTML += `<div class="suggestion-item"><div class="suggestion-user" onclick="visitProfile('${u.username}')"><img src="${u.profilePic}"><strong>${u.username}</strong> ${onlineBadge}</div><button class="btn-blue" style="padding:5px 12px; font-size:11px;" onclick="quickFollow('${u.username}')">Follow</button></div>`;
+            });
+        }
+
+        async function quickFollow(username) {
+            playNotificationTone();
+            await fetch('http://localhost:3000/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: username }) });
+            loadSuggestions();
+        }
+
+        function showExplore() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.remove('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            document.getElementById('exploreTitle').innerText = "Explore";
+            loadExploreCategory('All');
+        }
+
+        async function loadExploreCategory(category, btnElement) {
+            if(btnElement) {
+                document.querySelectorAll('#exploreSection .explore-cat-btn').forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+            let res = category === 'All' ? await fetch('http://localhost:3000/posts') : await fetch(`http://localhost:3000/explore/${category}`);
+            let posts = await res.json();
+            let grid = document.getElementById('exploreGrid');
+            grid.innerHTML = "";
+            if(posts.length === 0) { grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>No posts in this category.</p>"; return; }
+            posts.forEach(post => {
+                if(post.image) {
+                    let encodedPost = encodeURIComponent(JSON.stringify(post));
+                    grid.innerHTML += `<div class="grid-item" onclick="viewPostDetail('${encodedPost}', '${post.username}')"><img src="${post.image}"></div>`;
+                }
+            });
+        }
+
+        function showReels() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.remove('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            loadReels();
+        }
+
+        async function showMessages() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.remove('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+
+            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let user = await res.json();
+            let followingList = user.following || [];
+            let chatListDiv = document.getElementById('chatUserList');
+            chatListDiv.innerHTML = "";
+            if(followingList.length === 0) { chatListDiv.innerHTML = "<p style='padding:16px; font-size:12px; color:var(--subtext-color);'>Aapne kisi ko follow nahi kiya hai.</p>"; return; }
+
+            let usersRes = await fetch('http://localhost:3000/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
+            let followingUsers = await usersRes.json();
+            followingUsers.forEach(u => {
+                let onlineBadge = u.isOnline ? `<span class="online-dot"></span>` : '';
+                chatListDiv.innerHTML += `<div class="user-list-item" onclick="openChat('${u.username}', '${u.profilePic}')"><img src="${u.profilePic}"><div><strong>${u.username}</strong> ${onlineBadge}</div></div>`;
+            });
+        }
+
+        async function openChat(username, userPic) {
+            activeChatUser = username;
+            let mainArea = document.getElementById('chatMainArea');
+            mainArea.innerHTML = `
+                <div class="chat-header-bar">
+                    <div style="display:flex; align-items:center; gap:10px;"><img src="${userPic}" style="width:34px; height:34px; border-radius:50%; object-fit:cover;"><strong>${username}</strong></div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="action-btn" onclick="startCall('audio')" style="margin:0; font-size:16px;" title="Audio Call">📞</button>
+                        <button class="action-btn" onclick="startCall('video')" style="margin:0; font-size:16px;" title="Video Call">📹</button>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessagesBox"></div>
+                <div id="typingIndicator" class="typing-indicator"></div>
+                <div class="chat-input-area">
+                    <button class="action-btn" onclick="document.getElementById('chatImageInput').click()" style="font-size:18px; margin:0;">📷</button>
+                    <button class="action-btn" id="micBtn" onclick="toggleVoiceRecording()" style="font-size:18px; margin:0;">🎤</button>
+                    <input type="text" id="chatMsgInput" placeholder="Message bhejein..." oninput="emitTyping()" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                    <button class="btn-blue" onclick="sendChatMessage()">Send</button>
+                </div>
+            `;
+            let res = await fetch(`http://localhost:3000/messages/${currentUser}/${activeChatUser}`);
+            let messages = await res.json();
+            let msgBox = document.getElementById('chatMessagesBox');
+            messages.forEach(m => {
+                let bubbleClass = m.sender === currentUser ? 'sent' : 'received';
+                let contentText = m.audioUrl ? `<audio controls src="${m.audioUrl}" style="max-width:200px;"></audio>` : (m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:180px; border-radius:8px;">` : (m.sharedPostId ? `<div style="border:1px solid var(--border-color); border-radius:6px; padding:6px; background:#000;"><img src="${m.sharedPostId.image}" style="width:150px; border-radius:4px;"><p style="font-size:11px; color:#fff;">${m.sharedPostId.content || ''}</p></div>` : m.text));
+                msgBox.innerHTML += `<div class="message-bubble ${bubbleClass}">${contentText}</div>`;
+            });
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        function sendChatImage(event) {
+            let file = event.target.files[0];
+            if(!file || !activeChatUser) return;
+            let reader = new FileReader();
+            reader.onload = e => {
+                socket.emit('send_message', { sender: currentUser, receiver: activeChatUser, text: '[Photo]', imageUrl: e.target.result });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function emitTyping() {
+            if(activeChatUser) socket.emit('typing', { sender: currentUser, receiver: activeChatUser });
+        }
+
+        function sendChatMessage() {
+            let input = document.getElementById('chatMsgInput');
+            let text = input.value.trim();
+            if(!text || !activeChatUser) return;
+            playNotificationTone();
+            socket.emit('send_message', { sender: currentUser, receiver: activeChatUser, text });
+            input.value = "";
+        }
+
+        async function openShareModal(postId) {
+            sharingPostId = postId;
+            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let user = await res.json();
+            let followingList = user.following || [];
+            let container = document.getElementById('shareUserListContainer');
+            container.innerHTML = "";
+            if(followingList.length === 0) { container.innerHTML = "<p style='color:var(--subtext-color);'>No followers to share with.</p>"; } 
+            else {
+                let usersRes = await fetch('http://localhost:3000/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
+                let users = await usersRes.json();
+                users.forEach(u => {
+                    container.innerHTML += `<div class="user-list-item" onclick="sharePostToUser('${u.username}')"><img src="${u.profilePic}"><strong>${u.username}</strong><button class="btn-blue" style="margin-left:auto; font-size:11px; padding:4px 10px;">Send</button></div>`;
+                });
+            }
+            document.getElementById('sharePostModal').classList.remove('hidden');
+        }
+
+        function closeShareModal() { document.getElementById('sharePostModal').classList.add('hidden'); }
+
+        async function sharePostToUser(targetUser) {
+            playNotificationTone();
+            socket.emit('send_message', { sender: currentUser, receiver: targetUser, text: '[Shared Post]', sharedPostId: sharingPostId });
+            closeShareModal();
+            alert("Post shared successfully!");
+        }
+
+        function showSettings() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.remove('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+        }
+
+        async function showNotifications() {
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.remove('hidden');
+
+            let res = await fetch(`http://localhost:3000/notifications/${currentUser}`);
+            let notifs = await res.json();
+            let container = document.getElementById('notifContainer');
+            container.innerHTML = "";
+            if (notifs.length === 0) { container.innerHTML = "<p style='padding:24px; text-align:center; color:var(--subtext-color);'>Koi notification nahi hai.</p>"; return; }
+            notifs.forEach(n => {
+                container.innerHTML += `<div class="notif-item" onclick="visitProfile('${n.sender}')"><div style="flex:1;"><span>${n.message}</span><div style="font-size:10px; color:var(--subtext-color);">${new Date(n.createdAt).toLocaleDateString()}</div></div></div>`;
+            });
+            checkUnreadNotifications();
+        }
+
+        async function checkUnreadNotifications() {
+            let res = await fetch(`http://localhost:3000/notifications/unread/${currentUser}`);
+            let data = await res.json();
+            let badge = document.getElementById('notifBadge');
+            if(data.unreadCount > 0) { badge.innerText = data.unreadCount; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+        }
+
+        async function visitProfile(username) {
+            currentlyViewingProfile = username;
+            document.getElementById('homeSection').classList.add('hidden');
+            document.getElementById('storyBooksSection').classList.add('hidden');
+            document.getElementById('confessionsSection').classList.add('hidden');
+            document.getElementById('exploreSection').classList.add('hidden');
+            document.getElementById('reelsSection').classList.add('hidden');
+            document.getElementById('messagesSection').classList.add('hidden');
+            document.getElementById('profileSection').classList.remove('hidden');
+            document.getElementById('settingsSection').classList.add('hidden');
+            document.getElementById('notificationsSection').classList.add('hidden');
+            
+            let res = await fetch(`http://localhost:3000/profile/${username}`);
+            let user = await res.json();
+            profileUserData = user; 
+            
+            document.getElementById('profUsername').innerText = user.username;
+            document.getElementById('profName').innerText = user.name;
+            document.getElementById('profBio').innerText = user.bio;
+            document.getElementById('profPic').src = user.profilePic;
+
+            let webBox = document.getElementById('profWebsiteBox');
+            if(user.websiteLink) { webBox.innerHTML = `🔗 <a href="${user.websiteLink}" target="_blank">${user.websiteLink}</a>`; } else { webBox.innerHTML = ""; }
+
+            let badge = document.getElementById('profVerifiedBadge');
+            if(user.isVerified) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+
+            if (username === currentUser && !user.isVerified) {
+                let monRes = await fetch('http://localhost:3000/monetization/status');
+                let monStatus = await monRes.json();
+                if(monStatus.verifiedBadge && monStatus.verifiedBadge.enabled) {
+                    document.getElementById('verifyBadgePayBtn').style.display = 'inline-block';
+                    document.getElementById('verifyBadgePayBtn').innerText = `⭐ Get Verified (₹${monStatus.verifiedBadge.price})`;
+                } else {
+                    document.getElementById('verifyBadgePayBtn').style.display = 'none';
+                }
+            } else {
+                document.getElementById('verifyBadgePayBtn').style.display = 'none';
+            }
+
+            document.getElementById('followersCount').innerText = user.followers ? user.followers.length : 0;
+            document.getElementById('followingCount').innerText = user.following ? user.following.length : 0;
+
+            let hContainer = document.getElementById('highlightsContainer');
+            hContainer.innerHTML = username === currentUser ? `<div class="highlight-circle" onclick="openAddHighlightModal()"><div style="width:60px; height:60px; border-radius:50%; border:2px dashed var(--border-color); display:flex; justify-content:center; align-items:center; font-size:22px; color:#0095f6;">+</div><span>New</span></div>` : '';
+            if(user.highlights) {
+                user.highlights.forEach(h => {
+                    hContainer.innerHTML += `<div class="highlight-circle"><img src="${h.image}"><span>${h.title}</span></div>`;
+                });
+            }
+
+            let actionBtnDiv = document.getElementById('profileActionBtn');
+            if (username === currentUser) { actionBtnDiv.innerHTML = `<button class="btn-gray" onclick="showSettings()">Settings</button>`; } 
+            else {
+                let isFollowing = user.followers && user.followers.includes(currentUser);
+                actionBtnDiv.innerHTML = `<button class="btn-blue" onclick="toggleFollow('${username}')">${isFollowing ? 'Following' : 'Follow'}</button>`;
+            }
+            renderProfileGrid();
+        }
+
+        function switchProfileTab(tab) {
+            currentProfileTab = tab;
+            document.getElementById('tabPosts').classList.toggle('active', tab === 'posts');
+            document.getElementById('tabSaved').classList.toggle('active', tab === 'saved');
+            renderProfileGrid();
+        }
+
+        async function renderProfileGrid() {
+            let grid = document.getElementById('myPostsGrid');
+            grid.innerHTML = "";
+            let postsToRender = [];
+
+            if(currentProfileTab === 'posts') {
+                let postsRes = await fetch(`http://localhost:3000/posts/user/${currentlyViewingProfile}`);
+                postsToRender = await postsRes.json();
+                document.getElementById('postCount').innerText = postsToRender.length;
+            } else {
+                postsToRender = profileUserData.savedPosts || [];
+            }
+
+            postsToRender.forEach(post => {
+                let content = post.image ? `<img src="${post.image}">` : `<div style="padding:10px; font-size:11px;">${post.content ? post.content.substring(0, 20) : ''}...</div>`;
+                let encodedPost = encodeURIComponent(JSON.stringify(post));
+                grid.innerHTML += `<div class="grid-item" onclick="viewPostDetail('${encodedPost}', '${profileUserData.profilePic}')">${content}</div>`;
+            });
+        }
+
+        async function viewPostDetail(encodedPost, userPic) {
+            let post = JSON.parse(decodeURIComponent(encodedPost));
+            renderPostContent(post, userPic);
+            document.getElementById('viewPostModal').classList.remove('hidden');
+        }
+
+        async function renderPostContent(post, userPic) {
+            let freshPostRes = await fetch(`http://localhost:3000/posts/${post._id}`);
+            let freshPost = await freshPostRes.json();
+
+            let media = freshPost.image ? `<div class="modal-left-media"><img src="${freshPost.image}"></div>` : `<div class="modal-left-media" style="background:var(--input-bg); padding:20px; text-align:center;"><h3>Text Post</h3></div>`;
+            let isLiked = freshPost.likes && freshPost.likes.includes(currentUser);
+            let likesCount = freshPost.likes ? freshPost.likes.length : 0;
+            let locationHTML = freshPost.location ? `<div style="font-size:11px; color:var(--subtext-color); margin-bottom:6px;">📍 ${freshPost.location}</div>` : '';
+
+            let commentsHTML = "";
+            if (freshPost.comments) {
+                freshPost.comments.forEach((c, cIdx) => {
+                    let commentLiked = c.likes && c.likes.includes(currentUser);
+                    let repliesHTML = "";
+                    if(c.replies) {
+                        c.replies.forEach(r => {
+                            repliesHTML += `<div style="margin-left:20px; font-size:12px; margin-top:4px;"><strong>${r.username}</strong> ${formatContent(r.text)}</div>`;
+                        });
+                    }
+
+                    commentsHTML += `
+                        <div class="comment-item" style="margin-bottom:12px;">
+                            <p><strong>${c.username}</strong> ${formatContent(c.text)} <button style="background:none; border:none; color:var(--subtext-color); font-size:11px; cursor:pointer; margin-left:10px;" onclick="likeComment('${freshPost._id}', ${cIdx})">❤️ ${c.likes ? c.likes.length : 0}</button></p>
+                            ${repliesHTML}
+                            <div style="margin-left:20px; margin-top:4px; display:flex; gap:6px;">
+                                <input type="text" id="replyInput-${freshPost._id}-${cIdx}" placeholder="Reply..." style="font-size:11px; padding:3px 8px; border:1px solid var(--border-color); background:transparent; color:var(--text-color); border-radius:4px;">
+                                <button onclick="addCommentReply('${freshPost._id}', ${cIdx})" style="font-size:11px; background:none; border:none; color:#0095f6; font-weight:bold; cursor:pointer;">Reply</button>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            document.getElementById('viewPostContent').innerHTML = `
+                ${media}
+                <div class="modal-right-content">
+                    <div class="modal-right-header">
+                        <img src="${userPic}">
+                        <strong>${freshPost.username}</strong>
+                    </div>
+                    <div class="modal-comments-area">
+                        <div style="font-size:13px; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                            ${locationHTML}
+                            <p><strong>${freshPost.username}</strong> ${formatContent(freshPost.content || '')}</p>
+                        </div>
+                        <div class="comment-list">${commentsHTML}</div>
+                    </div>
+                    <div style="border-top:1px solid var(--border-color);">
+                        <div class="interaction-bar" style="padding:10px 14px;">
+                            <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="likePostModal('${freshPost._id}', '${userPic}')">❤️ ${likesCount}</button>
+                            <button class="action-btn" onclick="savePostBookmark('${freshPost._id}')">🔖 Save</button>
+                            <button class="action-btn" onclick="openShareModal('${freshPost._id}')">🔗 Share</button>
+                        </div>
+                        <div class="comment-input-box" style="padding:10px 14px; border-top:1px solid var(--border-color);">
+                            <input type="text" id="modalCommentInput-${freshPost._id}" placeholder="Add a comment...">
+                            <button onclick="addCommentModal('${freshPost._id}', '${userPic}')">Post</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function savePostBookmark(postId) {
+            playNotificationTone();
+            let res = await fetch(`http://localhost:3000/posts/${postId}/save`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, postId })
+            });
+            let data = await res.json();
+            alert(data.message);
+        }
+
+        async function likeComment(postId, commentIndex) {
+            playNotificationTone();
+            await fetch(`http://localhost:3000/posts/${postId}/comment/${commentIndex}/like`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser })
+            });
+            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let post = await res.json();
+            renderPostContent(post, post.userPic || 'https://i.pravatar.cc/150');
+        }
+
+        async function addCommentReply(postId, commentIndex) {
+            playNotificationTone();
+            let text = document.getElementById(`replyInput-${postId}-${commentIndex}`).value;
+            if(!text) return;
+            await fetch(`http://localhost:3000/posts/${postId}/comment/${commentIndex}/reply`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, text })
+            });
+            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let post = await res.json();
+            renderPostContent(post, post.userPic || 'https://i.pravatar.cc/150');
+        }
+
+        async function likePostModal(postId, userPic) {
+            playNotificationTone();
+            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let post = await res.json();
+            renderPostContent(post, userPic);
+            loadPosts();
+        }
+
+        async function addCommentModal(postId, userPic) {
+            playNotificationTone();
+            let text = document.getElementById(`modalCommentInput-${postId}`).value;
+            if(!text) return;
+            await fetch(`http://localhost:3000/posts/${postId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, text }) });
+            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let post = await res.json();
+            renderPostContent(post, userPic);
+            loadPosts();
+        }
+
+        function closeViewPostModal() { document.getElementById('viewPostModal').classList.add('hidden'); }
+
+        async function toggleFollow(targetUsername) {
+            playNotificationTone();
+            await fetch('http://localhost:3000/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: targetUsername }) });
+            visitProfile(targetUsername); 
+        }
+
+        function handleProfilePicClick() {
+            if (currentlyViewingProfile === currentUser) document.getElementById('storyInput').click(); 
+        }
+
+        function prepareStoryUpload(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = e => {
+                pendingStoryImage = e.target.result;
+                document.getElementById('storyUploadModal').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function closeStoryUploadModal() { document.getElementById('storyUploadModal').classList.add('hidden'); }
+
+        async function uploadStoryWithCaption() {
+            let caption = document.getElementById('storyCaptionInput').value;
+            let musicUrl = document.getElementById('storyMusicSelect').value;
+            let userRes = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let user = await userRes.json();
+            await fetch('http://localhost:3000/stories', { 
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ username: currentUser, userPic: user.profilePic, image: pendingStoryImage, caption, musicUrl, viewers: [] }) 
+            });
+            closeStoryUploadModal();
+            loadStories(); 
+        }
+
+        async function loadStories() {
+            let res = await fetch('http://localhost:3000/stories'); 
+            let stories = await res.json();
+            let container = document.getElementById('storiesContainer');
+            container.innerHTML = `<div class="story-item" onclick="document.getElementById('storyInput').click()"><div class="story-ring"><div class="add-story-btn">+</div></div><span>Your Story</span></div>`;
+            stories.forEach(story => {
+                let encImg = encodeURIComponent(story.image);
+                let encMusic = encodeURIComponent(story.musicUrl || '');
+                container.innerHTML += `<div class="story-item" onclick="viewStory('${story._id}', '${story.username}', '${story.userPic}', '${encImg}', '${encMusic}')"><div class="story-ring"><img src="${story.userPic}"></div><span>${story.username}</span></div>`;
+            });
+        }
+
+        async function viewStory(storyId, username, userPic, encodedImage, encodedMusic) {
+            activeStoryId = storyId;
+            document.getElementById('storyUsername').innerText = username;
+            document.getElementById('storyUserPic').src = userPic;
+            document.getElementById('storyImage').src = decodeURIComponent(encodedImage);
+            
+            await fetch('http://localhost:3000/story/view', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storyId, username: currentUser })
+            });
+
+            let musicBox = document.getElementById('storyMusicPlayerBox');
+            let musicUrl = decodeURIComponent(encodedMusic || '');
+            if (activeStoryAudio) { activeStoryAudio.pause(); activeStoryAudio = null; }
+            if (musicUrl) {
+                activeStoryAudio = new Audio(musicUrl);
+                activeStoryAudio.loop = true;
+                activeStoryAudio.play().catch(e => {});
+                musicBox.innerHTML = `🎵 Playing Music`;
+                musicBox.classList.remove('hidden');
+            } else { musicBox.classList.add('hidden'); }
+
+            document.getElementById('storyModal').classList.remove('hidden');
+        }
+
+        async function viewStoryViewers() {
+            let res = await fetch('http://localhost:3000/stories');
+            let stories = await res.json();
+            let currentStory = stories.find(s => s._id === activeStoryId);
+            if(!currentStory) return;
+            
+            let listDiv = document.getElementById('storyViewersList');
+            listDiv.innerHTML = "";
+            if(!currentStory.viewers || currentStory.viewers.length === 0) {
+                listDiv.innerHTML = "<p style='color:var(--subtext-color);'>Abhi kisi ne nahi dekhi.</p>";
+            } else {
+                currentStory.viewers.forEach(v => {
+                    listDiv.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border-color);"><strong>@${v}</strong></div>`;
+                });
+            }
+            document.getElementById('storyViewersModal').classList.remove('hidden');
+        }
+
+        function closeStoryViewersModal() { document.getElementById('storyViewersModal').classList.add('hidden'); }
+
+        function closeStory() {
+            if (activeStoryAudio) { activeStoryAudio.pause(); activeStoryAudio = null; }
+            document.getElementById('storyModal').classList.add('hidden');
+        }
+
+        function previewPostImage(event) {
+            let reader = new FileReader();
+            reader.onload = e => {
+                selectedPostImage = e.target.result;
+                let preview = document.getElementById('imagePreview');
+                preview.src = selectedPostImage;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        async function addPost() {
+            let text = document.getElementById('postInput').value;
+            let category = document.getElementById('postCategorySelect').value;
+            let location = document.getElementById('postLocationInput').value.trim();
+            let pollQuestion = document.getElementById('pollQuestionInput').value.trim();
+            let opt1 = document.getElementById('pollOpt1').value.trim();
+            let opt2 = document.getElementById('pollOpt2').value.trim();
+            if(!text && !selectedPostImage && !pollQuestion) return;
+
+            let pollOptions = (pollQuestion && opt1 && opt2) ? [opt1, opt2] : [];
+            let res = await fetch('http://localhost:3000/posts', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser, content: text, category, image: selectedPostImage, location, pollQuestion, pollOptions })
+            });
+
+            if(res.ok) {
+                playNotificationTone();
+                document.getElementById('postInput').value = "";
+                document.getElementById('postLocationInput').value = "";
+                document.getElementById('pollQuestionInput').value = "";
+                document.getElementById('pollOpt1').value = "";
+                document.getElementById('pollOpt2').value = "";
+                document.getElementById('pollCreatorBox').classList.add('hidden');
+                selectedPostImage = null;
+                document.getElementById('imagePreview').style.display = "none";
+                showHome();
+            }
+        }
+
+        async function loadPosts() {
+            let res = await fetch('http://localhost:3000/posts');
+            let posts = await res.json();
+            let feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            for (let post of posts) {
+                let userRes = await fetch(`http://localhost:3000/profile/${post.username}`);
+                let postUser = await userRes.json();
+                let userDp = postUser ? postUser.profilePic : "https://i.pravatar.cc/150";
+                let isLiked = post.likes && post.likes.includes(currentUser);
+
+                let pollHTML = "";
+                if (post.pollOptions && post.pollOptions.length > 0) {
+                    let totalVotes = post.pollOptions.reduce((sum, opt) => sum + opt.votes.length, 0);
+                    let optionsListHTML = post.pollOptions.map((opt, oIdx) => {
+                        let hasVoted = opt.votes.includes(currentUser);
+                        let percent = totalVotes > 0 ? Math.round((opt.votes.length / totalVotes) * 100) : 0;
+                        return `<div class="poll-option" onclick="votePoll('${post._id}', ${oIdx})"><span>${opt.text} ${hasVoted ? '✔' : ''}</span><span>${percent}%</span></div>`;
+                    }).join('');
+                    pollHTML = `<div class="poll-box"><strong>📊 ${post.pollQuestion}</strong><div>${optionsListHTML}</div></div>`;
+                }
+
+                let encodedPost = encodeURIComponent(JSON.stringify(post));
+
+                feed.innerHTML += `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-user-info" onclick="visitProfile('${post.username}')">
+                            <img src="${userDp}"><h4>${post.username}</h4>
+                        </div>
+                        <span style="font-size:11px; background:var(--input-bg); padding:3px 10px; border-radius:12px; font-weight:500;">${post.category || 'Desi'}</span>
+                    </div>
+                    <div class="media-container" ondblclick="handleDoubleTapLike(event, '${post._id}')">
+                        ${post.image ? `<img src="${post.image}" class="uploaded-media" onclick="viewPostDetail('${encodedPost}', '${userDp}')">` : ''}
+                    </div>
+                    <div style="padding:12px 16px; font-size:13px;" onclick="viewPostDetail('${encodedPost}', '${userDp}')">
+                        ${post.location ? `<div style="font-size:11px; color:var(--subtext-color);">📍 ${post.location}</div>` : ''}
+                        <p><strong>${post.username}</strong> ${formatContent(post.content || '')}</p>
+                        ${pollHTML}
+                    </div>
+                    <div class="interaction-bar">
+                        <div>
+                            <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post._id}')">❤️ ${post.likes ? post.likes.length : 0}</button>
+                            <button class="action-btn" onclick="viewPostDetail('${encodedPost}', '${userDp}')">💬 Comments</button>
+                        </div>
+                        <button class="action-btn" onclick="openShareModal('${post._id}')">🔗 Share</button>
+                    </div>
+                </div>`;
+            }
+        }
+
+        async function handleDoubleTapLike(e, postId) {
+            playNotificationTone();
+            let container = e.currentTarget;
+            let heart = document.createElement('div');
+            heart.className = 'like-animation';
+            heart.innerHTML = '❤️';
+            heart.style.left = `${e.offsetX - 45}px`;
+            heart.style.top = `${e.offsetY - 45}px`;
+            container.appendChild(heart);
+            setTimeout(() => heart.remove(), 800);
+
+            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            loadPosts();
+        }
+
+        async function toggleLike(postId) {
+            playNotificationTone();
+            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            loadPosts();
+        }
+
+        async function uploadReel() {
+            let caption = document.getElementById('reelCaptionInput').value;
+            let fileInput = document.getElementById('reelVideoInput').files[0];
+            if(!fileInput) return alert("Kripya video select karein!");
+            let reader = new FileReader();
+            reader.onload = async e => {
+                playNotificationTone();
+                await fetch('http://localhost:3000/reels', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser, videoUrl: e.target.result, caption })
+                });
+                loadReels();
+                alert("Reel upload ho gayi!");
+            };
+            reader.readAsDataURL(fileInput);
+        }
+
+        async function loadReels() {
+            let res = await fetch('http://localhost:3000/reels');
+            let reels = await res.json();
+            let container = document.getElementById('reelsFeed');
+            container.innerHTML = "";
+            reels.forEach(reel => {
+                container.innerHTML += `
+                    <div class="reel-card">
+                        <video src="${reel.videoUrl}" class="reel-video" controls loop></video>
+                        <div class="reel-overlay">
+                            <div>
+                                <h4 onclick="visitProfile('${reel.username}')">@${reel.username}</h4>
+                                <p style="font-size:13px;">${reel.caption || ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function openEditModal() {
+            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let user = await res.json();
+            document.getElementById('editNameInput').value = user.name;
+            document.getElementById('editUsernameInput').value = user.username;
+            document.getElementById('editBioInput').value = user.bio;
+            document.getElementById('editWebsiteInput').value = user.websiteLink || "";
+            document.getElementById('editModalPic').src = user.profilePic;
+            selectedProfilePic = user.profilePic;
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() { document.getElementById('editProfileModal').classList.add('hidden'); }
+        function previewEditPic(event) {
+            let reader = new FileReader();
+            reader.onload = e => { selectedProfilePic = e.target.result; document.getElementById('editModalPic').src = selectedProfilePic; };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        async function saveProfile() {
+            let name = document.getElementById('editNameInput').value;
+            let newUsername = document.getElementById('editUsernameInput').value.trim();
+            let bio = document.getElementById('editBioInput').value;
+            let websiteLink = document.getElementById('editWebsiteInput').value.trim();
+            let isPrivate = document.getElementById('editPrivateCheckbox').checked;
+
+            let res = await fetch('http://localhost:3000/profile/update', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldUsername: currentUser, newUsername, name, bio, websiteLink, profilePic: selectedProfilePic, isPrivate })
+            });
+            let data = await res.json();
+            if(res.ok) { currentUser = newUsername; localStorage.setItem("loggedInUser", currentUser); closeEditModal(); visitProfile(currentUser); } 
+            else { alert(data.message); }
+        }
+
+        window.onload = () => { fetchWebsiteLogo(); checkDarkModePreference(); loadPosts(); loadStories(); checkUnreadNotifications(); loadSuggestions(); loadTrendingHashtags(); };
+    </script>
+</body>
+</html>
