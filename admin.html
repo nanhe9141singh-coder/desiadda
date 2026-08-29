@@ -171,7 +171,7 @@
             let data = await res.json();
             if(res.ok && data.success) {
                 localStorage.setItem("adminLoggedIn", data.username);
-                localStorage.setItem("loggedInUser", data.username); // Fix for public profile
+                localStorage.setItem("loggedInUser", data.username);
                 checkAdminAuth();
             } else {
                 alert(data.message || "Login failed!");
@@ -181,7 +181,7 @@
         function checkAdminAuth() {
             let adminUser = localStorage.getItem("adminLoggedIn");
             if(adminUser) {
-                localStorage.setItem("loggedInUser", adminUser); // Always sync
+                localStorage.setItem("loggedInUser", adminUser);
                 document.getElementById('adminLoginScreen').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 document.getElementById('adminMainContent').classList.remove('hidden');

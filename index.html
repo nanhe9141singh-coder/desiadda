@@ -639,7 +639,14 @@
         let selectedPostImage = null;
         let selectedProfilePic = null;
         let pendingStoryImage = null;
+        
         let currentUser = localStorage.getItem("loggedInUser");
+        let adminSession = localStorage.getItem("adminLoggedIn");
+        if (!currentUser && adminSession) {
+            currentUser = adminSession;
+            localStorage.setItem("loggedInUser", adminSession);
+        }
+
         let currentlyViewingProfile = currentUser; 
         let profileUserData = null; 
         let activeChatUser = null;
@@ -665,8 +672,10 @@
                 let res = await fetch(`/profile/${currentUser}`);
                 let user = await res.json();
                 if(!user || !user.username) {
-                    localStorage.removeItem("loggedInUser");
-                    window.location.href = "login.html";
+                    if(currentUser !== 'admin') {
+                        localStorage.removeItem("loggedInUser");
+                        window.location.href = "login.html";
+                    }
                 }
             } catch(e) {}
         }
@@ -1082,7 +1091,7 @@
 
         function selectLocation(city, inputId, dropdownId) {
             document.getElementById(inputId).value = city;
-            document.getElementById(dropdownId).classList.add('hidden');
+            document.getElementById('locationDropdown').classList.add('hidden');
         }
 
         async function fetchWebsiteLogo() {
