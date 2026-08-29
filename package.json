@@ -15,7 +15,10 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "mongoose": "^9.9.4",
+<<<<<<< HEAD
     "nodemailer": "^9.0.6",
+=======
+>>>>>>> c3aadb66ae3f8081ae3dbfd9054265c26c7a9f61
     "socket.io": "^4.8.3"
   }
 }
