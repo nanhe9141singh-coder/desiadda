@@ -63,7 +63,6 @@ const monetizationSchema = new mongoose.Schema({
 });
 const MonetizationSetting = mongoose.model('MonetizationSetting', monetizationSchema);
 
-// --- STORY BOOK SCHEMA ---
 const storyBookSchema = new mongoose.Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
@@ -159,11 +158,26 @@ async function initSystem() {
     if (!superAdmin) {
         await new Admin({ username: "admin", password: "admin123", role: "Super-Admin" }).save();
     }
+    
+    // Ensure Admin also exists as a User so profile and editing work seamlessly
+    let adminUser = await User.findOne({ username: "admin" });
+    if (!adminUser) {
+        let hashedAdminPwd = await bcrypt.hash("admin123", 10);
+        await new User({
+            emailOrMobile: "admin@desiadda.com",
+            password: hashedAdminPwd,
+            dob: "2000-01-01",
+            name: "DesiAdda Admin",
+            username: "admin",
+            bio: "Main is platform ka Super-Admin hoon!",
+            isVerified: true
+        }).save();
+    }
+
     if(!await MonetizationSetting.findOne({ key: 'verifiedBadge' })) {
         await new MonetizationSetting({ key: 'verifiedBadge', enabled: false, price: 149 }).save();
     }
     
-    // Seed 1000+ Full Stories if empty
     let count = await StoryBook.countDocuments();
     if(count < 1000) {
         console.log("📚 Seeding 1000+ Stories into Story Book Library...");
@@ -193,7 +207,6 @@ async function initSystem() {
 }
 initSystem();
 
-// --- STORY BOOK API ENDPOINTS ---
 app.get('/stories/books', async (req, res) => {
     try {
         let genre = req.query.genre;
@@ -227,7 +240,6 @@ app.post('/stories/books/:id/chapter', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Error" }); }
 });
 
-// --- ADMIN API ENDPOINTS ---
 app.post('/admin/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -357,7 +369,6 @@ app.post('/admin/update-credentials', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Error" }); }
 });
 
-// --- PUBLIC SOCIAL API ENDPOINTS ---
 app.post('/ai/generate', async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -557,14 +568,20 @@ app.post('/follow', async (req, res) => {
 });
 
 app.get('/profile/:username', async (req, res) => {
-    try { res.json(await User.findOne({ username: req.params.username }).populate('savedPosts')); } catch (error) { res.status(500).json({ message: "Error" }); }
+    try { 
+        let user = await User.findOne({ username: req.params.username }).populate('savedPosts');
+        if(!user && req.params.username === 'admin') {
+            user = { username: 'admin', name: 'DesiAdda Admin', bio: 'Super-Admin account', isVerified: true, profilePic: 'https://i.pravatar.cc/150' };
+        }
+        res.json(user); 
+    } catch (error) { res.status(500).json({ message: "Error" }); }
 });
 
 app.post('/profile/update', async (req, res) => {
     try {
         const { oldUsername, newUsername, name, bio, websiteLink, profilePic, isPrivate } = req.body;
         if (oldUsername !== newUsername && await User.findOne({ username: newUsername })) return res.status(400).json({ message: "Username pehle se maujood hai!" });
-        await User.findOneAndUpdate({ username: oldUsername }, { username: newUsername, name, bio, websiteLink, profilePic, isPrivate });
+        await User.findOneAndUpdate({ username: oldUsername }, { username: newUsername, name, bio, websiteLink, profilePic, isPrivate }, { upsert: true });
         if (oldUsername !== newUsername) {
             await Post.updateMany({ username: oldUsername }, { username: newUsername });
             await Reel.updateMany({ username: oldUsername }, { username: newUsername });
