@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">DesiAdda - Ultimate Social</title>
-    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease; }
@@ -629,7 +629,7 @@
     <input type="file" id="chatImageInput" accept="image/*" style="display:none;" onchange="sendChatImage(event)">
 
     <script>
-        const socket = io('http://localhost:3000');
+        const socket = io();
         let selectedPostImage = null;
         let selectedProfilePic = null;
         let pendingStoryImage = null;
@@ -769,7 +769,7 @@
         }
 
         async function payForVerifiedBadge() {
-            let res = await fetch('http://localhost:3000/monetization/status');
+            let res = await fetch('/monetization/status');
             let status = await res.json();
             if(!status.verifiedBadge || !status.verifiedBadge.enabled) {
                 alert("Paid Blue Tick is currently disabled by admin.");
@@ -783,7 +783,7 @@
                 "description": "Verified Badge Subscription",
                 "handler": async function (response) {
                     playNotificationTone();
-                    let verifyRes = await fetch('http://localhost:3000/payment/verify-success', {
+                    let verifyRes = await fetch('/payment/verify-success', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ username: currentUser, type: 'verifiedBadge' })
                     });
@@ -799,7 +799,7 @@
 
         async function loadTrendingHashtags() {
             try {
-                let res = await fetch('http://localhost:3000/trending/hashtags');
+                let res = await fetch('/trending/hashtags');
                 let tags = await res.json();
                 let list = document.getElementById('trendingTagsList');
                 list.innerHTML = "";
@@ -828,7 +828,7 @@
                 document.querySelectorAll('#storyBooksSection .explore-cat-btn').forEach(b => b.classList.remove('active'));
                 btnElement.classList.add('active');
             }
-            let res = await fetch(`http://localhost:3000/stories/books?genre=${genre}`);
+            let res = await fetch(`/stories/books?genre=${genre}`);
             let books = await res.json();
             let grid = document.getElementById('storyBooksGrid');
             grid.innerHTML = "";
@@ -881,7 +881,7 @@
 
             if(!title || !synopsis || !firstChapterContent) return alert("Sabhi fields bharein!");
 
-            let res = await fetch('http://localhost:3000/stories/books/add', {
+            let res = await fetch('/stories/books/add', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, author: currentUser, genre, synopsis, firstChapterTitle, firstChapterContent })
             });
@@ -898,7 +898,7 @@
             let content = prompt("Naye Chapter ka Content likhein:");
             if(!title || !content || !currentOpenBook) return;
 
-            fetch(`http://localhost:3000/stories/books/${currentOpenBook._id}/chapter`, {
+            fetch(`/stories/books/${currentOpenBook._id}/chapter`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, content })
             }).then(res => res.json()).then(data => {
@@ -916,7 +916,7 @@
             if(!title || !fileInput) return alert("Title aur image dono zaroori hain!");
             let reader = new FileReader();
             reader.onload = async e => {
-                await fetch('http://localhost:3000/highlights/add', {
+                await fetch('/highlights/add', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: currentUser, title, image: e.target.result })
                 });
@@ -960,7 +960,7 @@
             let query = document.getElementById('hubAiInput').value.trim();
             if(!query) return;
             document.getElementById('hubAiOutput').innerText = "AI soch raha hai...";
-            let res = await fetch('http://localhost:3000/ai/generate', {
+            let res = await fetch('/ai/generate', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: query })
             });
@@ -973,7 +973,7 @@
             let promptText = input.value.trim();
             input.placeholder = "🤖 AI is generating caption & hashtags...";
             try {
-                let res = await fetch('http://localhost:3000/ai/generate', {
+                let res = await fetch('/ai/generate', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: promptText })
                 });
@@ -987,7 +987,7 @@
 
         async function votePoll(postId, optionIndex) {
             playNotificationTone();
-            let res = await fetch(`http://localhost:3000/posts/${postId}/vote`, {
+            let res = await fetch(`/posts/${postId}/vote`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, optionIndex })
             });
@@ -1023,7 +1023,7 @@
             let dropdown = document.getElementById('mentionDropdown');
             let lastWord = text.split(' ').pop();
             if (lastWord.startsWith('@') && lastWord.length > 1) {
-                let res = await fetch(`http://localhost:3000/search/${lastWord.substring(1)}`);
+                let res = await fetch(`/search/${lastWord.substring(1)}`);
                 let users = await res.json();
                 dropdown.innerHTML = "";
                 users.forEach(u => {
@@ -1062,7 +1062,7 @@
 
         async function fetchWebsiteLogo() {
             try {
-                let res = await fetch('http://localhost:3000/settings/logo');
+                let res = await fetch('/settings/logo');
                 let data = await res.json();
                 let logoElement = document.getElementById('brandLogoText');
                 
@@ -1080,14 +1080,14 @@
             let isDark = document.body.classList.contains('dark-mode');
             document.getElementById('themeToggleIcon').innerText = isDark ? '☀️' : '🌙';
             
-            await fetch('http://localhost:3000/settings/darkmode', {
+            await fetch('/settings/darkmode', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, darkMode: isDark })
             });
         }
 
         async function checkDarkModePreference() {
-            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
             if(user.darkMode) {
                 document.body.classList.add('dark-mode');
@@ -1106,7 +1106,7 @@
         }
 
         async function requestVerification() {
-            let res = await fetch('http://localhost:3000/request-verification', {
+            let res = await fetch('/request-verification', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser })
             });
@@ -1126,7 +1126,7 @@
                 return;
             }
 
-            let res = await fetch('http://localhost:3000/profile/change-password', {
+            let res = await fetch('/profile/change-password', {
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, oldPassword, newPassword })
@@ -1151,7 +1151,7 @@
         async function searchHashtag(tag) {
             showExplore();
             document.getElementById('exploreTitle').innerText = `#${tag} Posts`;
-            let res = await fetch(`http://localhost:3000/hashtag/${tag}`);
+            let res = await fetch(`/hashtag/${tag}`);
             let posts = await res.json();
             let grid = document.getElementById('exploreGrid');
             grid.innerHTML = "";
@@ -1168,7 +1168,7 @@
             let query = document.getElementById('searchInput').value;
             let resultsDiv = document.getElementById('searchResults');
             if(query.length < 1) { resultsDiv.classList.add('hidden'); return; }
-            let res = await fetch(`http://localhost:3000/search/${query}`);
+            let res = await fetch(`/search/${query}`);
             let users = await res.json();
             resultsDiv.innerHTML = "";
             users.forEach(u => {
@@ -1212,7 +1212,7 @@
             let isAnonymous = document.getElementById('anonymousCheck').checked;
             if(!text) return alert("Kuch toh likhein!");
 
-            let res = await fetch('http://localhost:3000/confessions', {
+            let res = await fetch('/confessions', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, vibe, isAnonymous, username: currentUser })
             });
@@ -1226,7 +1226,7 @@
         }
 
         async function loadConfessions() {
-            let res = await fetch('http://localhost:3000/confessions');
+            let res = await fetch('/confessions');
             let data = await res.json();
             let feed = document.getElementById('confessionsFeed');
             feed.innerHTML = "";
@@ -1244,7 +1244,7 @@
         }
 
         async function loadSuggestions() {
-            let res = await fetch(`http://localhost:3000/users/suggestions/${currentUser}`);
+            let res = await fetch(`/users/suggestions/${currentUser}`);
             let users = await res.json();
             let list = document.getElementById('suggestionsList');
             list.innerHTML = "";
@@ -1258,7 +1258,7 @@
 
         async function quickFollow(username) {
             playNotificationTone();
-            await fetch('http://localhost:3000/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: username }) });
+            await fetch('/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: username }) });
             loadSuggestions();
         }
 
@@ -1281,7 +1281,7 @@
                 document.querySelectorAll('#exploreSection .explore-cat-btn').forEach(b => b.classList.remove('active'));
                 btnElement.classList.add('active');
             }
-            let res = category === 'All' ? await fetch('http://localhost:3000/posts') : await fetch(`http://localhost:3000/explore/${category}`);
+            let res = category === 'All' ? await fetch('/posts') : await fetch(`/explore/${category}`);
             let posts = await res.json();
             let grid = document.getElementById('exploreGrid');
             grid.innerHTML = "";
@@ -1318,14 +1318,14 @@
             document.getElementById('settingsSection').classList.add('hidden');
             document.getElementById('notificationsSection').classList.add('hidden');
 
-            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
             let followingList = user.following || [];
             let chatListDiv = document.getElementById('chatUserList');
             chatListDiv.innerHTML = "";
             if(followingList.length === 0) { chatListDiv.innerHTML = "<p style='padding:16px; font-size:12px; color:var(--subtext-color);'>Aapne kisi ko follow nahi kiya hai.</p>"; return; }
 
-            let usersRes = await fetch('http://localhost:3000/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
+            let usersRes = await fetch('/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
             let followingUsers = await usersRes.json();
             followingUsers.forEach(u => {
                 let onlineBadge = u.isOnline ? `<span class="online-dot"></span>` : '';
@@ -1353,7 +1353,7 @@
                     <button class="btn-blue" onclick="sendChatMessage()">Send</button>
                 </div>
             `;
-            let res = await fetch(`http://localhost:3000/messages/${currentUser}/${activeChatUser}`);
+            let res = await fetch(`/messages/${currentUser}/${activeChatUser}`);
             let messages = await res.json();
             let msgBox = document.getElementById('chatMessagesBox');
             messages.forEach(m => {
@@ -1389,14 +1389,14 @@
 
         async function openShareModal(postId) {
             sharingPostId = postId;
-            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
             let followingList = user.following || [];
             let container = document.getElementById('shareUserListContainer');
             container.innerHTML = "";
             if(followingList.length === 0) { container.innerHTML = "<p style='color:var(--subtext-color);'>No followers to share with.</p>"; } 
             else {
-                let usersRes = await fetch('http://localhost:3000/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
+                let usersRes = await fetch('/users/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usernames: followingList }) });
                 let users = await usersRes.json();
                 users.forEach(u => {
                     container.innerHTML += `<div class="user-list-item" onclick="sharePostToUser('${u.username}')"><img src="${u.profilePic}"><strong>${u.username}</strong><button class="btn-blue" style="margin-left:auto; font-size:11px; padding:4px 10px;">Send</button></div>`;
@@ -1437,7 +1437,7 @@
             document.getElementById('settingsSection').classList.add('hidden');
             document.getElementById('notificationsSection').classList.remove('hidden');
 
-            let res = await fetch(`http://localhost:3000/notifications/${currentUser}`);
+            let res = await fetch(`/notifications/${currentUser}`);
             let notifs = await res.json();
             let container = document.getElementById('notifContainer');
             container.innerHTML = "";
@@ -1449,7 +1449,7 @@
         }
 
         async function checkUnreadNotifications() {
-            let res = await fetch(`http://localhost:3000/notifications/unread/${currentUser}`);
+            let res = await fetch(`/notifications/unread/${currentUser}`);
             let data = await res.json();
             let badge = document.getElementById('notifBadge');
             if(data.unreadCount > 0) { badge.innerText = data.unreadCount; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
@@ -1467,7 +1467,7 @@
             document.getElementById('settingsSection').classList.add('hidden');
             document.getElementById('notificationsSection').classList.add('hidden');
             
-            let res = await fetch(`http://localhost:3000/profile/${username}`);
+            let res = await fetch(`/profile/${username}`);
             let user = await res.json();
             profileUserData = user; 
             
@@ -1483,7 +1483,7 @@
             if(user.isVerified) badge.classList.remove('hidden'); else badge.classList.add('hidden');
 
             if (username === currentUser && !user.isVerified) {
-                let monRes = await fetch('http://localhost:3000/monetization/status');
+                let monRes = await fetch('/monetization/status');
                 let monStatus = await monRes.json();
                 if(monStatus.verifiedBadge && monStatus.verifiedBadge.enabled) {
                     document.getElementById('verifyBadgePayBtn').style.display = 'inline-block';
@@ -1528,7 +1528,7 @@
             let postsToRender = [];
 
             if(currentProfileTab === 'posts') {
-                let postsRes = await fetch(`http://localhost:3000/posts/user/${currentlyViewingProfile}`);
+                let postsRes = await fetch(`/posts/user/${currentlyViewingProfile}`);
                 postsToRender = await postsRes.json();
                 document.getElementById('postCount').innerText = postsToRender.length;
             } else {
@@ -1549,7 +1549,7 @@
         }
 
         async function renderPostContent(post, userPic) {
-            let freshPostRes = await fetch(`http://localhost:3000/posts/${post._id}`);
+            let freshPostRes = await fetch(`/posts/${post._id}`);
             let freshPost = await freshPostRes.json();
 
             let media = freshPost.image ? `<div class="modal-left-media"><img src="${freshPost.image}"></div>` : `<div class="modal-left-media" style="background:var(--input-bg); padding:20px; text-align:center;"><h3>Text Post</h3></div>`;
@@ -1611,7 +1611,7 @@
 
         async function savePostBookmark(postId) {
             playNotificationTone();
-            let res = await fetch(`http://localhost:3000/posts/${postId}/save`, {
+            let res = await fetch(`/posts/${postId}/save`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, postId })
             });
@@ -1621,11 +1621,11 @@
 
         async function likeComment(postId, commentIndex) {
             playNotificationTone();
-            await fetch(`http://localhost:3000/posts/${postId}/comment/${commentIndex}/like`, {
+            await fetch(`/posts/${postId}/comment/${commentIndex}/like`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser })
             });
-            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let res = await fetch(`/posts/${postId}`);
             let post = await res.json();
             renderPostContent(post, post.userPic || 'https://i.pravatar.cc/150');
         }
@@ -1634,19 +1634,19 @@
             playNotificationTone();
             let text = document.getElementById(`replyInput-${postId}-${commentIndex}`).value;
             if(!text) return;
-            await fetch(`http://localhost:3000/posts/${postId}/comment/${commentIndex}/reply`, {
+            await fetch(`/posts/${postId}/comment/${commentIndex}/reply`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, text })
             });
-            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            let res = await fetch(`/posts/${postId}`);
             let post = await res.json();
             renderPostContent(post, post.userPic || 'https://i.pravatar.cc/150');
         }
 
         async function likePostModal(postId, userPic) {
             playNotificationTone();
-            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
-            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            await fetch(`/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            let res = await fetch(`/posts/${postId}`);
             let post = await res.json();
             renderPostContent(post, userPic);
             loadPosts();
@@ -1656,8 +1656,8 @@
             playNotificationTone();
             let text = document.getElementById(`modalCommentInput-${postId}`).value;
             if(!text) return;
-            await fetch(`http://localhost:3000/posts/${postId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, text }) });
-            let res = await fetch(`http://localhost:3000/posts/${postId}`);
+            await fetch(`/posts/${postId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser, text }) });
+            let res = await fetch(`/posts/${postId}`);
             let post = await res.json();
             renderPostContent(post, userPic);
             loadPosts();
@@ -1667,7 +1667,7 @@
 
         async function toggleFollow(targetUsername) {
             playNotificationTone();
-            await fetch('http://localhost:3000/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: targetUsername }) });
+            await fetch('/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser, targetUser: targetUsername }) });
             visitProfile(targetUsername); 
         }
 
@@ -1691,9 +1691,9 @@
         async function uploadStoryWithCaption() {
             let caption = document.getElementById('storyCaptionInput').value;
             let musicUrl = document.getElementById('storyMusicSelect').value;
-            let userRes = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let userRes = await fetch(`/profile/${currentUser}`);
             let user = await userRes.json();
-            await fetch('http://localhost:3000/stories', { 
+            await fetch('/stories', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ username: currentUser, userPic: user.profilePic, image: pendingStoryImage, caption, musicUrl, viewers: [] }) 
             });
@@ -1702,7 +1702,7 @@
         }
 
         async function loadStories() {
-            let res = await fetch('http://localhost:3000/stories'); 
+            let res = await fetch('/stories'); 
             let stories = await res.json();
             let container = document.getElementById('storiesContainer');
             container.innerHTML = `<div class="story-item" onclick="document.getElementById('storyInput').click()"><div class="story-ring"><div class="add-story-btn">+</div></div><span>Your Story</span></div>`;
@@ -1719,7 +1719,7 @@
             document.getElementById('storyUserPic').src = userPic;
             document.getElementById('storyImage').src = decodeURIComponent(encodedImage);
             
-            await fetch('http://localhost:3000/story/view', {
+            await fetch('/story/view', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ storyId, username: currentUser })
             });
@@ -1739,7 +1739,7 @@
         }
 
         async function viewStoryViewers() {
-            let res = await fetch('http://localhost:3000/stories');
+            let res = await fetch('/stories');
             let stories = await res.json();
             let currentStory = stories.find(s => s._id === activeStoryId);
             if(!currentStory) return;
@@ -1784,7 +1784,7 @@
             if(!text && !selectedPostImage && !pollQuestion) return;
 
             let pollOptions = (pollQuestion && opt1 && opt2) ? [opt1, opt2] : [];
-            let res = await fetch('http://localhost:3000/posts', {
+            let res = await fetch('/posts', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUser, content: text, category, image: selectedPostImage, location, pollQuestion, pollOptions })
             });
@@ -1804,12 +1804,12 @@
         }
 
         async function loadPosts() {
-            let res = await fetch('http://localhost:3000/posts');
+            let res = await fetch('/posts');
             let posts = await res.json();
             let feed = document.getElementById('feed');
             feed.innerHTML = "";
             for (let post of posts) {
-                let userRes = await fetch(`http://localhost:3000/profile/${post.username}`);
+                let userRes = await fetch(`/profile/${post.username}`);
                 let postUser = await userRes.json();
                 let userDp = postUser ? postUser.profilePic : "https://i.pravatar.cc/150";
                 let isLiked = post.likes && post.likes.includes(currentUser);
@@ -1865,13 +1865,13 @@
             container.appendChild(heart);
             setTimeout(() => heart.remove(), 800);
 
-            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            await fetch(`/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
             loadPosts();
         }
 
         async function toggleLike(postId) {
             playNotificationTone();
-            await fetch(`http://localhost:3000/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
+            await fetch(`/posts/${postId}/like`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser }) });
             loadPosts();
         }
 
@@ -1882,7 +1882,7 @@
             let reader = new FileReader();
             reader.onload = async e => {
                 playNotificationTone();
-                await fetch('http://localhost:3000/reels', {
+                await fetch('/reels', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: currentUser, videoUrl: e.target.result, caption })
                 });
@@ -1893,7 +1893,7 @@
         }
 
         async function loadReels() {
-            let res = await fetch('http://localhost:3000/reels');
+            let res = await fetch('/reels');
             let reels = await res.json();
             let container = document.getElementById('reelsFeed');
             container.innerHTML = "";
@@ -1913,7 +1913,7 @@
         }
 
         async function openEditModal() {
-            let res = await fetch(`http://localhost:3000/profile/${currentUser}`);
+            let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
             document.getElementById('editNameInput').value = user.name;
             document.getElementById('editUsernameInput').value = user.username;
@@ -1938,7 +1938,7 @@
             let websiteLink = document.getElementById('editWebsiteInput').value.trim();
             let isPrivate = document.getElementById('editPrivateCheckbox').checked;
 
-            let res = await fetch('http://localhost:3000/profile/update', {
+            let res = await fetch('/profile/update', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ oldUsername: currentUser, newUsername, name, bio, websiteLink, profilePic: selectedProfilePic, isPrivate })
             });
