@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
     websiteLink: { type: String, default: "" },
     profilePic: { type: String, default: "https://i.pravatar.cc/150" },
     isPrivate: { type: Boolean, default: false },
-    isVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: true },
     isSuspended: { type: Boolean, default: false },
     verificationRequested: { type: Boolean, default: false },
     darkMode: { type: Boolean, default: false },
@@ -69,11 +69,7 @@ const storyBookSchema = new mongoose.Schema({
     genre: { type: String, default: "Desi Romance" },
     coverImage: { type: String, default: "https://picsum.photos/300/400" },
     synopsis: { type: String, required: true },
-    chapters: [{ 
-        chapterNumber: Number, 
-        title: String, 
-        content: String 
-    }],
+    chapters: [{ chapterNumber: Number, title: String, content: String }],
     likes: [{ type: String }],
     createdAt: { type: Date, default: Date.now }
 });
@@ -159,7 +155,6 @@ async function initSystem() {
         await new Admin({ username: "admin", password: "admin123", role: "Super-Admin" }).save();
     }
     
-    // Ensure Admin also exists as a User so profile and editing work seamlessly
     let adminUser = await User.findOne({ username: "admin" });
     if (!adminUser) {
         let hashedAdminPwd = await bcrypt.hash("admin123", 10);
@@ -210,8 +205,9 @@ initSystem();
 app.get('/stories/books', async (req, res) => {
     try {
         let genre = req.query.genre;
+        let limit = parseInt(req.query.limit) || 40; // Fast loading with pagination limit
         let query = genre && genre !== 'All' ? { genre } : {};
-        let books = await StoryBook.find(query).sort({ createdAt: -1 });
+        let books = await StoryBook.find(query).sort({ createdAt: -1 }).limit(limit);
         res.json(books);
     } catch (error) { res.status(500).json({ message: "Error" }); }
 });
@@ -276,10 +272,15 @@ app.post('/admin/suspend-user', async (req, res) => {
 
 app.delete('/admin/user/:username', async (req, res) => {
     try {
-        await User.findOneAndDelete({ username: req.params.username });
-        await Post.deleteMany({ username: req.params.username });
-        res.json({ message: "User deleted successfully!" });
-    } catch (error) { res.status(500).json({ message: "Error" }); }
+        let usernameToDelete = req.params.username;
+        await User.findOneAndDelete({ username: usernameToDelete });
+        await Post.deleteMany({ username: usernameToDelete });
+        await Reel.deleteMany({ username: usernameToDelete });
+        await Story.deleteMany({ username: usernameToDelete });
+        await Message.deleteMany({ $or: [{ sender: usernameToDelete }, { receiver: usernameToDelete }] });
+        await Notification.deleteMany({ $or: [{ sender: usernameToDelete }, { recipient: usernameToDelete }] });
+        res.json({ message: "User aur uska sara data successfully delete ho gaya!" });
+    } catch (error) { res.status(500).json({ message: "Error deleting user" }); }
 });
 
 app.get('/admin/team', async (req, res) => {

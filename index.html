@@ -281,7 +281,7 @@
                 <button class="explore-cat-btn" onclick="loadStoryBooks('Horror', this)">👻 Horror</button>
             </div>
 
-            <div class="book-grid" id="storyBooksGrid">Loading 1000+ library books...</div>
+            <div class="book-grid" id="storyBooksGrid">Loading books...</div>
         </div>
 
         <!-- Read Book Reader Modal -->
@@ -809,7 +809,7 @@
             } catch(e) {}
         }
 
-        // --- STORY BOOKS FUNCTIONS ---
+        // --- STORY BOOKS FUNCTIONS (Fast & Optimized) ---
         function showStoryBooks() {
             document.getElementById('homeSection').classList.add('hidden');
             document.getElementById('confessionsSection').classList.add('hidden');
@@ -828,22 +828,28 @@
                 document.querySelectorAll('#storyBooksSection .explore-cat-btn').forEach(b => b.classList.remove('active'));
                 btnElement.classList.add('active');
             }
-            let res = await fetch(`/stories/books?genre=${genre}`);
-            let books = await res.json();
             let grid = document.getElementById('storyBooksGrid');
-            grid.innerHTML = "";
-            if(books.length === 0) { grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>No books found.</p>"; return; }
-            books.forEach(b => {
-                let encBook = encodeURIComponent(JSON.stringify(b));
-                grid.innerHTML += `
-                    <div class="book-card" onclick="openBookReader('${encBook}')">
-                        <img src="${b.coverImage}">
-                        <div class="book-card-info">
-                            <h4>${b.title}</h4>
-                            <p>By @${b.author} • ${b.genre}</p>
-                        </div>
-                    </div>`;
-            });
+            grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>Loading books...</p>";
+
+            try {
+                let res = await fetch(`/stories/books?genre=${genre}&limit=40`);
+                let books = await res.json();
+                grid.innerHTML = "";
+                if(books.length === 0) { grid.innerHTML = "<p style='padding:20px; color:var(--subtext-color);'>No books found.</p>"; return; }
+                books.forEach(b => {
+                    let encBook = encodeURIComponent(JSON.stringify(b));
+                    grid.innerHTML += `
+                        <div class="book-card" onclick="openBookReader('${encBook}')">
+                            <img src="${b.coverImage}">
+                            <div class="book-card-info">
+                                <h4>${b.title}</h4>
+                                <p>By @${b.author} • ${b.genre}</p>
+                            </div>
+                        </div>`;
+                });
+            } catch(e) {
+                grid.innerHTML = "<p style='padding:20px; color:red;'>Error loading books.</p>";
+            }
         }
 
         function openBookReader(encodedBook) {
@@ -1087,12 +1093,14 @@
         }
 
         async function checkDarkModePreference() {
-            let res = await fetch(`/profile/${currentUser}`);
-            let user = await res.json();
-            if(user.darkMode) {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggleIcon').innerText = '☀️';
-            }
+            try {
+                let res = await fetch(`/profile/${currentUser}`);
+                let user = await res.json();
+                if(user && user.darkMode) {
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('themeToggleIcon').innerText = '☀️';
+                }
+            } catch(e) {}
             let savedTone = localStorage.getItem(`soundTone_${currentUser}`) || 'chime';
             let toneSelect = document.getElementById('soundToneSelect');
             if(toneSelect) toneSelect.value = savedTone;
@@ -1320,7 +1328,7 @@
 
             let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
-            let followingList = user.following || [];
+            let followingList = (user && user.following) ? user.following : [];
             let chatListDiv = document.getElementById('chatUserList');
             chatListDiv.innerHTML = "";
             if(followingList.length === 0) { chatListDiv.innerHTML = "<p style='padding:16px; font-size:12px; color:var(--subtext-color);'>Aapne kisi ko follow nahi kiya hai.</p>"; return; }
@@ -1391,7 +1399,7 @@
             sharingPostId = postId;
             let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
-            let followingList = user.following || [];
+            let followingList = (user && user.following) ? user.following : [];
             let container = document.getElementById('shareUserListContainer');
             container.innerHTML = "";
             if(followingList.length === 0) { container.innerHTML = "<p style='color:var(--subtext-color);'>No followers to share with.</p>"; } 
@@ -1469,12 +1477,13 @@
             
             let res = await fetch(`/profile/${username}`);
             let user = await res.json();
+            if(!user) { user = { username: username, name: username, bio: 'Profile loading...', profilePic: 'https://i.pravatar.cc/150' }; }
             profileUserData = user; 
             
-            document.getElementById('profUsername').innerText = user.username;
-            document.getElementById('profName').innerText = user.name;
-            document.getElementById('profBio').innerText = user.bio;
-            document.getElementById('profPic').src = user.profilePic;
+            document.getElementById('profUsername').innerText = user.username || username;
+            document.getElementById('profName').innerText = user.name || username;
+            document.getElementById('profBio').innerText = user.bio || '';
+            document.getElementById('profPic').src = user.profilePic || 'https://i.pravatar.cc/150';
 
             let webBox = document.getElementById('profWebsiteBox');
             if(user.websiteLink) { webBox.innerHTML = `🔗 <a href="${user.websiteLink}" target="_blank">${user.websiteLink}</a>`; } else { webBox.innerHTML = ""; }
@@ -1532,13 +1541,14 @@
                 postsToRender = await postsRes.json();
                 document.getElementById('postCount').innerText = postsToRender.length;
             } else {
-                postsToRender = profileUserData.savedPosts || [];
+                postsToRender = (profileUserData && profileUserData.savedPosts) ? profileUserData.savedPosts : [];
             }
 
             postsToRender.forEach(post => {
                 let content = post.image ? `<img src="${post.image}">` : `<div style="padding:10px; font-size:11px;">${post.content ? post.content.substring(0, 20) : ''}...</div>`;
                 let encodedPost = encodeURIComponent(JSON.stringify(post));
-                grid.innerHTML += `<div class="grid-item" onclick="viewPostDetail('${encodedPost}', '${profileUserData.profilePic}')">${content}</div>`;
+                let userPic = (profileUserData && profileUserData.profilePic) ? profileUserData.profilePic : 'https://i.pravatar.cc/150';
+                grid.innerHTML += `<div class="grid-item" onclick="viewPostDetail('${encodedPost}', '${userPic}')">${content}</div>`;
             });
         }
 
@@ -1693,9 +1703,10 @@
             let musicUrl = document.getElementById('storyMusicSelect').value;
             let userRes = await fetch(`/profile/${currentUser}`);
             let user = await userRes.json();
+            let userPic = (user && user.profilePic) ? user.profilePic : 'https://i.pravatar.cc/150';
             await fetch('/stories', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ username: currentUser, userPic: user.profilePic, image: pendingStoryImage, caption, musicUrl, viewers: [] }) 
+                body: JSON.stringify({ username: currentUser, userPic, image: pendingStoryImage, caption, musicUrl, viewers: [] }) 
             });
             closeStoryUploadModal();
             loadStories(); 
@@ -1811,7 +1822,7 @@
             for (let post of posts) {
                 let userRes = await fetch(`/profile/${post.username}`);
                 let postUser = await userRes.json();
-                let userDp = postUser ? postUser.profilePic : "https://i.pravatar.cc/150";
+                let userDp = (postUser && postUser.profilePic) ? postUser.profilePic : "https://i.pravatar.cc/150";
                 let isLiked = post.likes && post.likes.includes(currentUser);
 
                 let pollHTML = "";
@@ -1915,12 +1926,13 @@
         async function openEditModal() {
             let res = await fetch(`/profile/${currentUser}`);
             let user = await res.json();
-            document.getElementById('editNameInput').value = user.name;
-            document.getElementById('editUsernameInput').value = user.username;
-            document.getElementById('editBioInput').value = user.bio;
+            if(!user) user = { name: currentUser, username: currentUser, bio: '', websiteLink: '', profilePic: 'https://i.pravatar.cc/150' };
+            document.getElementById('editNameInput').value = user.name || '';
+            document.getElementById('editUsernameInput').value = user.username || currentUser;
+            document.getElementById('editBioInput').value = user.bio || '';
             document.getElementById('editWebsiteInput').value = user.websiteLink || "";
-            document.getElementById('editModalPic').src = user.profilePic;
-            selectedProfilePic = user.profilePic;
+            document.getElementById('editModalPic').src = user.profilePic || 'https://i.pravatar.cc/150';
+            selectedProfilePic = user.profilePic || 'https://i.pravatar.cc/150';
             document.getElementById('editProfileModal').classList.remove('hidden');
         }
 
