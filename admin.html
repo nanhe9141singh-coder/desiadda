@@ -24,10 +24,11 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
         th { background: #f8fafc; color: #64748b; font-weight: 600; }
         
-        .btn { padding: 6px 14px; border-radius: 6px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn { padding: 6px 14px; border-radius: 6px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
         .btn-green { background: #10b981; color: #fff; }
         .btn-red { background: #ef4444; color: #fff; }
         .btn-blue { background: #0095f6; color: #fff; }
+        .btn-purple { background: #8b5cf6; color: #fff; }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #475569; }
@@ -62,6 +63,7 @@
             <a onclick="switchTab('monetizationTab')" id="menuMonetization">⭐ Paid Blue Tick & Pricing</a>
             <a onclick="switchTab('logoTab')" id="menuLogo">🎨 Website Logo & Branding</a>
             <a onclick="switchTab('teamTab')" id="menuTeam">🛡️ Admin Team</a>
+            <a href="index.html" target="_blank" style="margin-top: 20px; background: #0f172a; text-align: center;">🌐 Visit Website</a>
         </div>
         <div>
             <a onclick="adminLogout()" style="color: #ef4444;">🚪 Logout</a>
@@ -71,7 +73,10 @@
     <div id="adminMainContent" class="main-content hidden">
         <div class="topbar">
             <h3 id="topbarTitle">User Management</h3>
-            <span id="adminUsernameDisplay" style="font-weight: bold; font-size: 13px;">admin</span>
+            <div>
+                <button class="btn btn-purple" onclick="goToMyProfile()" style="margin-right: 15px;">👤 My Public Profile</button>
+                <span id="adminUsernameDisplay" style="font-weight: bold; font-size: 13px;">admin</span>
+            </div>
         </div>
 
         <div class="content-area">
@@ -197,6 +202,12 @@
             location.reload();
         }
 
+        function goToMyProfile() {
+            let adminUser = localStorage.getItem("adminLoggedIn") || "admin";
+            localStorage.setItem("loggedInUser", adminUser);
+            window.open('index.html', '_blank');
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
@@ -217,7 +228,7 @@
             users.forEach(u => {
                 let verifyBtn = u.isVerified ? `<button class="btn btn-red" onclick="verifyUser('${u.username}', false)">Unverify</button>` : `<button class="btn btn-green" onclick="verifyUser('${u.username}', true)">Verify</button>`;
                 let suspendBtn = u.isSuspended ? `<button class="btn btn-green" onclick="suspendUser('${u.username}', false)">Unsuspend</button>` : `<button class="btn btn-red" onclick="suspendUser('${u.username}', true)">Suspend</button>`;
-                let deleteBtn = `<button class="btn btn-red" onclick="deleteUser('${u.username}')" style="margin-left: 5px;">Delete</button>`;
+                let deleteBtn = u.username !== 'admin' ? `<button class="btn btn-red" onclick="deleteUser('${u.username}')" style="margin-left: 5px;">Delete</button>` : '';
 
                 tbody.innerHTML += `
                     <tr>
