@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -18,6 +19,15 @@ const mongoURI = 'mongodb+srv://nanhe9141singh_db_user:T3GWqfKAIrYN7HB9@cluster0
 mongoose.connect(mongoURI)
   .then(() => console.log('🎉 MongoDB Cloud connected successfully!'))
   .catch((err) => console.log('❌ Database error:', err));
+
+// Nodemailer Transporter Setup (Aap yahan apna Gmail aur App Password dal sakte hain)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'apka.email@gmail.com',
+        pass: 'apka_gmail_app_password'
+    }
+});
 
 const userSchema = new mongoose.Schema({
     emailOrMobile: { type: String, required: true, unique: true },
@@ -172,35 +182,47 @@ async function initSystem() {
     if(!await MonetizationSetting.findOne({ key: 'verifiedBadge' })) {
         await new MonetizationSetting({ key: 'verifiedBadge', enabled: false, price: 149 }).save();
     }
-    
-    let count = await StoryBook.countDocuments();
-    if(count < 1000) {
-        console.log("📚 Seeding 1000+ Stories into Story Book Library...");
-        let genres = ["Desi Romance", "Thriller", "Comedy", "Sci-Fi", "Horror", "Mystery", "Drama"];
-        let authors = ["AnoopWriter", "DesiKavavi", "SahityaGuru", "Kalamkaar", "StoryWeaver", "Roohdar"];
-        let bulkStories = [];
-        
-        for(let i = 1; i <= 1000; i++) {
-            let genre = genres[i % genres.length];
-            let author = authors[i % authors.length];
-            bulkStories.push({
-                title: `Kahani #${i}: ${genre} Safar`,
-                author: author,
-                genre: genre,
-                coverImage: `https://picsum.photos/seed/story${i}/300/400`,
-                synopsis: `Yeh ek behtareen ${genre.toLowerCase()} kahani hai jo aapko shuru se ant tak bandh kar rakhegi. Padhiye iska romanchak safar.`,
-                chapters: [
-                    { chapterNumber: 1, title: "Pehla Kadam", content: `Chapter 1 ki shuruat hoti hai ek haseen subah se. Sab kuch normal lag raha tha, par achanak... (Kahani #${i} ka aarambh)` },
-                    { chapterNumber: 2, title: "Naya Mod", content: `Chapter 2 me kahani ek naya mor leti hai. Pareshaniyan badhti hain aur rahasya khulte hain.` }
-                ],
-                likes: []
-            });
-        }
-        await StoryBook.insertMany(bulkStories);
-        console.log("🎉 1000 Stories Successfully Seeded!");
-    }
 }
 initSystem();
+
+app.post('/send-otp', async (req, res) => {
+    try {
+        const { emailOrMobile, username } = req.body;
+        if (username && await User.findOne({ username })) return res.status(400).json({ message: "Username pehle se maujood hai!" });
+        if (await User.findOne({ emailOrMobile })) return res.status(400).json({ message: "Ye Email/Mobile pehle se registered hai!" });
+        
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        otpStorage[emailOrMobile] = { otp, userData: req.body };
+
+        let mailOptions = {
+            from: 'DesiAdda <no-reply@desiadda.com>',
+            to: emailOrMobile,
+            subject: 'DesiAdda Account Verification OTP',
+            text: `Aapka DesiAdda verification OTP hai: ${otp}`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return res.json({ message: "OTP Generated!", mockOtp: otp });
+            } else {
+                res.json({ message: "OTP successfully email par bhej diya gaya hai!", mockOtp: otp });
+            }
+        });
+    } catch (error) { res.status(500).json({ message: "Server error!" }); }
+});
+
+app.post('/verify-otp', async (req, res) => {
+    try {
+        const { emailOrMobile, otp } = req.body;
+        const record = otpStorage[emailOrMobile];
+        if (!record || record.otp !== otp) return res.status(400).json({ message: "Galat OTP!" });
+        const hashedPassword = await bcrypt.hash(record.userData.password, 10);
+        record.userData.password = hashedPassword;
+        await new User(record.userData).save();
+        delete otpStorage[emailOrMobile];
+        res.json({ message: "Account successfully ban gaya!" });
+    } catch (error) { res.status(500).json({ message: "Server error!" }); }
+});
 
 app.get('/stories/books', async (req, res) => {
     try {
@@ -358,18 +380,6 @@ app.post('/admin/settings/logo', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Error" }); }
 });
 
-app.post('/admin/update-credentials', async (req, res) => {
-    try {
-        const { oldUsername, newUsername, newPassword } = req.body;
-        const admin = await Admin.findOne({ username: oldUsername });
-        if (!admin) return res.status(404).json({ message: "Admin not found" });
-        admin.username = newUsername;
-        if (newPassword) admin.password = newPassword;
-        await admin.save();
-        res.json({ message: "Credentials updated successfully!", newUsername });
-    } catch (error) { res.status(500).json({ message: "Error" }); }
-});
-
 app.post('/ai/generate', async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -383,30 +393,6 @@ app.post('/ai/generate', async (req, res) => {
         let randomTags = tags.sort(() => 0.5 - Math.random()).slice(0, 5).join(' ');
         res.json({ success: true, suggestion: `${randomCaption} ${randomTags}` });
     } catch (error) { res.status(500).json({ message: "AI Error" }); }
-});
-
-app.post('/send-otp', async (req, res) => {
-    try {
-        const { emailOrMobile, username } = req.body;
-        if (username && await User.findOne({ username })) return res.status(400).json({ message: "Username pehle se maujood hai!" });
-        if (await User.findOne({ emailOrMobile })) return res.status(400).json({ message: "Ye Email/Mobile pehle se registered hai!" });
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStorage[emailOrMobile] = { otp, userData: req.body };
-        res.json({ message: "OTP bhej diya gaya hai!", mockOtp: otp });
-    } catch (error) { res.status(500).json({ message: "Server error!" }); }
-});
-
-app.post('/verify-otp', async (req, res) => {
-    try {
-        const { emailOrMobile, otp } = req.body;
-        const record = otpStorage[emailOrMobile];
-        if (!record || record.otp !== otp) return res.status(400).json({ message: "Galat OTP!" });
-        const hashedPassword = await bcrypt.hash(record.userData.password, 10);
-        record.userData.password = hashedPassword;
-        await new User(record.userData).save();
-        delete otpStorage[emailOrMobile];
-        res.json({ message: "Account successfully ban gaya!" });
-    } catch (error) { res.status(500).json({ message: "Server error!" }); }
 });
 
 app.post('/login', async (req, res) => {

@@ -224,7 +224,6 @@
     </header>
 
     <div class="container">
-        <!-- Live Trending Hashtags Ticker -->
         <div class="trending-ticker" id="trendingTicker">
             <span style="font-weight:bold; color:var(--subtext-color);">🔥 Trending:</span>
             <div id="trendingTagsList" style="display:flex; gap:8px;"></div>
@@ -271,7 +270,6 @@
             <div id="feed">Loading posts...</div>
         </div>
 
-        <!-- Story Book Library Section -->
         <div id="storyBooksSection" class="hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
                 <h2 style="font-weight: 500;">📖 Community Story Books</h2>
@@ -290,7 +288,6 @@
             <div class="book-grid" id="storyBooksGrid">Loading books...</div>
         </div>
 
-        <!-- Read Book Reader Modal -->
         <div id="readBookModal" class="modal-overlay hidden" onclick="document.getElementById('readBookModal').classList.add('hidden')">
             <div class="modal-box" onclick="event.stopPropagation()" style="width: 90%; max-width: 600px; height: 80vh; text-align: left; display:flex; flex-direction:column;">
                 <span class="close-post-btn" onclick="document.getElementById('readBookModal').classList.add('hidden')">×</span>
@@ -309,7 +306,6 @@
             </div>
         </div>
 
-        <!-- Write New Book Modal -->
         <div id="writeBookModal" class="modal-overlay hidden">
             <div class="modal-box" style="text-align: left; width: 420px;">
                 <span class="close-post-btn" onclick="document.getElementById('writeBookModal').classList.add('hidden')">×</span>
@@ -837,7 +833,6 @@
             } catch(e) {}
         }
 
-        // --- STORY BOOKS FUNCTIONS ---
         function showStoryBooks() {
             document.getElementById('homeSection').classList.add('hidden');
             document.getElementById('confessionsSection').classList.add('hidden');

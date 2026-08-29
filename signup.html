@@ -10,7 +10,6 @@
         
         .signup-card { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 40px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .logo { font-family: 'Brush Script MT', cursive; font-size: 42px; background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; font-weight: bold; }
-        
         .subtitle { font-size: 14px; font-weight: bold; color: #8e8e8e; margin-bottom: 20px; line-height: 1.4; }
         
         input { width: 100%; padding: 12px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 13px; outline: none; }
@@ -21,7 +20,7 @@
         
         .login-box { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; font-size: 14px; }
         .login-box a { color: #0095f6; text-decoration: none; font-weight: bold; }
-        
+        .resend-link { font-size: 12px; color: #0095f6; cursor: pointer; margin-top: 15px; display: inline-block; font-weight: bold; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -31,9 +30,8 @@
         <h1 class="logo">DesiAdda</h1>
         <p class="subtitle">Doston ki duniya se judne ke liye apna account banayein.</p>
         
-        <!-- Step 1: Details Form -->
         <div id="step1Form">
-            <input type="text" id="emailOrMobile" placeholder="Mobile number or email">
+            <input type="text" id="emailOrMobile" placeholder="Email address">
             <input type="text" id="fullName" placeholder="Full Name">
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
@@ -46,11 +44,12 @@
             <button class="signup-btn" onclick="sendOtpAction()">Next</button>
         </div>
 
-        <!-- Step 2: OTP Verification -->
         <div id="step2Form" class="hidden">
-            <p style="font-size: 13px; margin-bottom: 15px; color: #262626;">Aapke mobile/email par ek OTP bheja gaya hai:</p>
+            <p style="font-size: 13px; margin-bottom: 15px; color: #262626;">Aapke email par OTP bhej diya gaya hai:</p>
             <input type="text" id="otpInput" placeholder="6-digit OTP enter karein">
             <button class="signup-btn" onclick="verifyOtpAction()">Confirm & Sign Up</button>
+            <br>
+            <span class="resend-link" onclick="sendOtpAction()">🔄 Resend OTP</span>
         </div>
     </div>
 
@@ -69,7 +68,7 @@
             let dob = document.getElementById('dob').value;
 
             if(!emailOrMobile || !name || !username || !password || !dob) {
-                alert("Kripya sabhi fields (Email, Name, Username, Password, DOB) bharein!");
+                alert("Kripya sabhi fields bharein!");
                 return;
             }
 
@@ -84,7 +83,7 @@
                 let data = await res.json();
 
                 if(res.ok) {
-                    alert(`OTP bhej diya gaya hai!\nMock OTP: ${data.mockOtp}`);
+                    alert(data.message + (data.mockOtp ? ` (Mock OTP: ${data.mockOtp})` : ""));
                     document.getElementById('step1Form').classList.add('hidden');
                     document.getElementById('step2Form').classList.remove('hidden');
                 } else {
