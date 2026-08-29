@@ -6,24 +6,22 @@
     <title>Sign Up - DesiAdda</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-        body { background-color: #fafafa; display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; }
-        .signup-card { background: #fff; border: 1px solid #dbdbdb; padding: 40px; width: 350px; text-align: center; border-radius: 4px; margin-bottom: 10px; }
-        .login-card { background: #fff; border: 1px solid #dbdbdb; padding: 20px; width: 350px; text-align: center; border-radius: 4px; font-size: 14px; margin-bottom: 40px; }
-        .login-card a { color: #0095f6; font-weight: bold; text-decoration: none; cursor: pointer; }
-        .logo { font-family: 'Brush Script MT', cursive; font-size: 40px; margin-bottom: 20px; color: #262626; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 3px; font-size: 14px; outline: none; }
-        .signup-btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
         
-        /* Footer */
-        footer { position: absolute; bottom: 0; width: 100%; padding: 20px 0; text-align: center; background: #fafafa; }
-        .footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-bottom: 8px; }
-        .footer-links a { color: #8e8e8e; font-size: 12px; text-decoration: none; cursor: pointer; }
-        .footer-links a:hover { text-decoration: underline; }
-        .copyright { color: #8e8e8e; font-size: 12px; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: #fff; width: 380px; border-radius: 12px; padding: 25px; text-align: left; position: relative; max-height: 80vh; overflow-y: auto; }
-        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 22px; cursor: pointer; font-weight: bold; }
+        .signup-card { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 40px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-family: 'Brush Script MT', cursive; font-size: 42px; background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; font-weight: bold; }
+        
+        .subtitle { font-size: 14px; font-weight: bold; color: #8e8e8e; margin-bottom: 20px; line-height: 1.4; }
+        
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 13px; outline: none; }
+        input:focus { border-color: #a8a8a8; }
+        
+        .signup-btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .signup-btn:hover { background: #1877f2; }
+        
+        .login-box { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; font-size: 14px; }
+        .login-box a { color: #0095f6; text-decoration: none; font-weight: bold; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -31,104 +29,97 @@
 
     <div class="signup-card">
         <h1 class="logo">DesiAdda</h1>
-        <p style="color: #8e8e8e; font-size: 14px; font-weight: bold; margin-bottom: 15px;">Sign up to see photos and videos from your friends.</p>
+        <p class="subtitle">Doston ki duniya se judne ke liye apna account banayein.</p>
         
-        <div id="step1">
-            <input type="text" id="emailOrMobile" placeholder="Mobile Number or Email">
-            <input type="text" id="name" placeholder="Full Name">
+        <!-- Step 1: Details Form -->
+        <div id="step1Form">
+            <input type="text" id="emailOrMobile" placeholder="Mobile number or email">
+            <input type="text" id="fullName" placeholder="Full Name">
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
-            <input type="date" id="dob">
-            <button class="signup-btn" onclick="sendOtp()">Next</button>
+            
+            <div style="text-align: left; margin: 5px 0 10px 0;">
+                <label style="font-size: 11px; color: #737373;">Janm-tithi (DOB):</label>
+                <input type="date" id="dob" style="margin-bottom: 0;">
+            </div>
+
+            <button class="signup-btn" onclick="sendOtpAction()">Next</button>
         </div>
 
-        <div id="step2" class="hidden">
-            <p style="font-size: 13px; margin-bottom: 10px;">Enter the 6-digit confirmation code sent to your terminal.</p>
-            <input type="text" id="otpInput" placeholder="Confirmation Code">
-            <button class="signup-btn" onclick="verifyOtp()">Confirm</button>
+        <!-- Step 2: OTP Verification -->
+        <div id="step2Form" class="hidden">
+            <p style="font-size: 13px; margin-bottom: 15px; color: #262626;">Aapke mobile/email par ek OTP bheja gaya hai:</p>
+            <input type="text" id="otpInput" placeholder="6-digit OTP enter karein">
+            <button class="signup-btn" onclick="verifyOtpAction()">Confirm & Sign Up</button>
         </div>
     </div>
 
-    <div class="login-card">
-        Have an account? <a href="login.html">Log in</a>
-    </div>
-
-    <footer>
-        <div class="footer-links">
-            <a onclick="showInfo('about')">About</a>
-            <a onclick="showInfo('help')">Help Center</a>
-            <a onclick="showInfo('terms')">Terms & Conditions</a>
-            <a onclick="showInfo('privacy')">Privacy Policy</a>
-        </div>
-        <div class="copyright">© 2026 DesiAdda from Anoop Singh</div>
-    </footer>
-
-    <div id="infoModal" class="modal-overlay hidden">
-        <div class="modal-box">
-            <span class="close-btn" onclick="closeInfoModal()">×</span>
-            <h3 id="infoTitle" style="margin-bottom: 10px; color: #262626;">Title</h3>
-            <div id="infoContent" style="font-size: 14px; color: #555; line-height: 1.5;">Content...</div>
-        </div>
+    <div class="login-box">
+        Pehle se account hai? <a href="login.html">Log in</a>
     </div>
 
     <script>
-        let userData = {};
+        let tempUserData = {};
 
-        async function sendOtp() {
-            userData.emailOrMobile = document.getElementById('emailOrMobile').value.trim();
-            userData.name = document.getElementById('name').value.trim();
-            userData.username = document.getElementById('username').value.trim();
-            userData.password = document.getElementById('password').value;
-            userData.dob = document.getElementById('dob').value;
+        async function sendOtpAction() {
+            let emailOrMobile = document.getElementById('emailOrMobile').value.trim();
+            let name = document.getElementById('fullName').value.trim();
+            let username = document.getElementById('username').value.trim();
+            let password = document.getElementById('password').value.trim();
+            let dob = document.getElementById('dob').value;
 
-            if(!userData.emailOrMobile || !userData.name || !userData.username || !userData.password || !userData.dob) {
-                return alert("Kripya saari fields bharein!");
+            if(!emailOrMobile || !name || !username || !password || !dob) {
+                alert("Kripya sabhi fields (Email, Name, Username, Password, DOB) bharein!");
+                return;
             }
 
-            let res = await fetch('http://localhost:3000/send-otp', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData)
-            });
-            let data = await res.json();
-            if(res.ok) {
-                alert("OTP bhej diya gaya hai! Server terminal (console) check karein.");
-                document.getElementById('step1').classList.add('hidden');
-                document.getElementById('step2').classList.remove('hidden');
-            } else { alert(data.message); }
+            tempUserData = { emailOrMobile, name, username, password, dob };
+
+            try {
+                let res = await fetch('/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tempUserData)
+                });
+                let data = await res.json();
+
+                if(res.ok) {
+                    alert(`OTP bhej diya gaya hai!\nMock OTP: ${data.mockOtp}`);
+                    document.getElementById('step1Form').classList.add('hidden');
+                    document.getElementById('step2Form').classList.remove('hidden');
+                } else {
+                    alert(data.message || "Sign up error!");
+                }
+            } catch(e) {
+                alert("Server connection failed!");
+            }
         }
 
-        async function verifyOtp() {
+        async function verifyOtpAction() {
             let otp = document.getElementById('otpInput').value.trim();
-            if(!otp) return alert("Kripya OTP daalein!");
-
-            let res = await fetch('http://localhost:3000/verify-otp', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ emailOrMobile: userData.emailOrMobile, otp })
-            });
-            let data = await res.json();
-            alert(data.message);
-            if(res.ok) { window.location.href = "login.html"; }
-        }
-
-        function showInfo(type) {
-            let title = document.getElementById('infoTitle');
-            let content = document.getElementById('infoContent');
-            if(type === 'about') {
-                title.innerText = "About DesiAdda";
-                content.innerText = "DesiAdda ek Indian Social Media platform hai jahan aap apne doston se jud sakte hain.";
-            } else if(type === 'help') {
-                title.innerText = "Help Center";
-                content.innerText = "Agar aapko account banane me samasya aa rahi hai, toh server terminal check karein.";
-            } else if(type === 'terms') {
-                title.innerText = "Terms & Conditions";
-                content.innerText = "1. DesiAdda par koi bhi apashabd ya galat content post na karein.";
-            } else if(type === 'privacy') {
-                title.innerText = "Privacy Policy";
-                content.innerText = "Aapka data puri tarah secure aur encrypted rehta hai.";
+            if(!otp) {
+                alert("Kripya OTP enter karein!");
+                return;
             }
-            document.getElementById('infoModal').classList.remove('hidden');
+
+            try {
+                let res = await fetch('/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emailOrMobile: tempUserData.emailOrMobile, otp })
+                });
+                let data = await res.json();
+
+                if(res.ok) {
+                    alert("Account successfully ban gaya! Ab aap login kar sakte hain.");
+                    window.location.href = "login.html";
+                } else {
+                    alert(data.message || "Galat OTP!");
+                }
+            } catch(e) {
+                alert("Verification failed!");
+            }
         }
-        function closeInfoModal() { document.getElementById('infoModal').classList.add('hidden'); }
     </script>
 </body>
 </html>
