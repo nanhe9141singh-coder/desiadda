@@ -43,7 +43,6 @@ const adminSchema = new mongoose.Schema({
 });
 const Admin = mongoose.model('Admin', adminSchema);
 
-// Story Books Schema
 const bookSchema = new mongoose.Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
@@ -53,17 +52,27 @@ const bookSchema = new mongoose.Schema({
 });
 const Book = mongoose.model('Book', bookSchema);
 
-// Confessions Schema
 const confessionSchema = new mongoose.Schema({
     text: { type: String, required: true },
+    audioUrl: { type: String, default: "" },
     mode: { type: String, default: "Party Mode" },
     isAnonymous: { type: Boolean, default: false },
     author: { type: String, default: "Anonymous" },
+    likes: [{ type: String }],
     createdAt: { type: Date, default: Date.now }
 });
 const Confession = mongoose.model('Confession', confessionSchema);
 
-// Branding Schema
+const pollSchema = new mongoose.Schema({
+    question: { type: String, required: true },
+    option1: { type: String, required: true },
+    option2: { type: String, required: true },
+    votes1: [{ type: String }],
+    votes2: [{ type: String }],
+    createdAt: { type: Date, default: Date.now }
+});
+const Poll = mongoose.model('Poll', pollSchema);
+
 const brandingSchema = new mongoose.Schema({
     siteName: { type: String, default: "DesiAdda" },
     logoUrl: { type: String, default: "" }
@@ -82,13 +91,11 @@ async function initSystem() {
 }
 initSystem();
 
-// OTP & Auth Routes
 app.post('/send-otp', async (req, res) => {
     try {
         const { emailOrMobile, username } = req.body;
         if (username && await User.findOne({ username })) return res.status(400).json({ message: "Username pehle se maujood hai!" });
         if (await User.findOne({ emailOrMobile })) return res.status(400).json({ message: "Ye Email/Mobile pehle se registered hai!" });
-        
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         otpStorage[emailOrMobile] = { otp, userData: req.body };
         res.json({ message: "OTP generated successfully!", mockOtp: otp });
@@ -112,20 +119,22 @@ app.post('/login', async (req, res) => {
         const { username, password } = req.body;
         const user = await User.findOne({ $or: [{ username }, { emailOrMobile: username }] });
         if (!user || user.isSuspended) return res.status(401).json({ message: "Galat details ya account suspended hai!" });
-        
         const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-            res.json({ success: true, username: user.username });
-        } else {
-            res.status(401).json({ message: "Galat Password!" });
-        }
+        if (isMatch) res.json({ success: true, username: user.username });
+        else res.status(401).json({ message: "Galat Password!" });
     } catch (error) { res.status(500).json({ message: "Server error!" }); }
 });
 
-// Profile Routes
+app.post('/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+    const admin = await Admin.findOne({ username });
+    if(admin && admin.password === password) res.json({ success: true, username: admin.username });
+    else res.status(401).json({ success: false, message: "Galat Admin credentials!" });
+});
+
 app.get('/profile/:username', async (req, res) => {
     try {
-        const user = await User.findOne({ username: req.params.username }).populate('savedPosts');
+        const user = await User.findOne({ username: req.params.username }).select('-password').populate('savedPosts');
         res.json(user);
     } catch (e) { res.status(500).json({ message: "Error" }); }
 });
@@ -133,57 +142,31 @@ app.get('/profile/:username', async (req, res) => {
 app.post('/profile/update', async (req, res) => {
     try {
         const { oldUsername, newUsername, name, bio, websiteLink, profilePic } = req.body;
-        await User.findOneAndUpdate({ username: oldUsername }, { username: newUsername, name, bio, websiteLink, profilePic });
-        res.json({ success: true, newUsername });
-    } catch (e) { res.status(500).json({ message: "Error" }); }
+        if(newUsername && newUsername !== oldUsername) {
+            if(await User.findOne({ username: newUsername })) return res.status(400).json({ message: "Yeh username pehle se liya gaya hai!" });
+        }
+        await User.findOneAndUpdate({ username: oldUsername }, { ...(newUsername && { username: newUsername }), name, bio, websiteLink, profilePic });
+        res.json({ success: true, newUsername: newUsername || oldUsername });
+    } catch (e) { res.status(500).json({ message: "Error updating profile" }); }
 });
 
-// Story Books APIs
-app.get('/books', async (req, res) => {
-    try {
-        const books = await Book.find().sort({ createdAt: -1 });
-        res.json(books);
-    } catch (e) { res.status(500).json([]); }
-});
+app.get('/books', async (req, res) => { res.json(await Book.find().sort({ createdAt: -1 })); });
+app.post('/books', async (req, res) => { await new Book(req.body).save(); res.json({ success: true }); });
 
-app.post('/books', async (req, res) => {
-    try {
-        await new Book(req.body).save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ message: "Error saving book" }); }
-});
+app.get('/confessions', async (req, res) => { res.json(await Confession.find().sort({ createdAt: -1 })); });
+app.post('/confessions', async (req, res) => { await new Confession(req.body).save(); res.json({ success: true }); });
 
-// Confessions APIs
-app.get('/confessions', async (req, res) => {
-    try {
-        const confs = await Confession.find().sort({ createdAt: -1 });
-        res.json(confs);
-    } catch (e) { res.status(500).json([]); }
-});
+app.get('/polls', async (req, res) => { res.json(await Poll.find().sort({ createdAt: -1 })); });
+app.post('/polls', async (req, res) => { await new Poll(req.body).save(); res.json({ success: true }); });
 
-app.post('/confessions', async (req, res) => {
-    try {
-        await new Confession(req.body).save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ message: "Error saving confession" }); }
-});
-
-// Branding APIs
 app.get('/branding', async (req, res) => {
-    try {
-        const brand = await Branding.findOne();
-        res.json(brand || { siteName: "DesiAdda", logoUrl: "" });
-    } catch (e) { res.json({ siteName: "DesiAdda", logoUrl: "" }); }
+    const brand = await Branding.findOne();
+    res.json(brand || { siteName: "DesiAdda", logoUrl: "" });
 });
-
 app.post('/branding', async (req, res) => {
-    try {
-        const { siteName, logoUrl } = req.body;
-        await Branding.findOneAndUpdate({}, { siteName, logoUrl }, { upsert: true, new: true });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ message: "Error updating branding" }); }
+    const { siteName, logoUrl } = req.body;
+    await Branding.findOneAndUpdate({}, { siteName, logoUrl }, { upsert: true, new: true });
+    res.json({ success: true });
 });
 
-server.listen(3000, () => {
-    console.log('🚀 Server 3000 port par live hai!');
-});
+server.listen(3000, () => { console.log('🚀 Server 3000 port par live hai!'); });

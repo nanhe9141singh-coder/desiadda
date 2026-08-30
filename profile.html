@@ -9,8 +9,8 @@
     <style>
         body { background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .profile-container { max-width: 935px; margin: 30px auto; padding: 20px; }
-        .profile-header { display: flex; align-items: center; margin-bottom: 40px; }
-        .profile-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 80px; }
+        .profile-header { display: flex; align-items: center; margin-bottom: 40px; flex-wrap: wrap; }
+        .profile-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 60px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -24,33 +24,82 @@
         </div>
     </div>
 
+    <!-- Edit Profile / Settings Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content p-3">
+                <h4 class="mb-3">Edit Profile & Settings</h4>
+                <div class="mb-2"><label>Name</label><input type="text" id="editName" class="form-control"></div>
+                <div class="mb-2"><label>Username</label><input type="text" id="editUsername" class="form-control"></div>
+                <div class="mb-2"><label>Bio</label><textarea id="editBio" class="form-control"></textarea></div>
+                <div class="mb-2"><label>Website Link</label><input type="text" id="editWebsite" class="form-control"></div>
+                <div class="mb-3"><label>Profile Picture URL</label><input type="text" id="editPic" class="form-control"></div>
+                <button class="btn btn-primary w-100" onclick="saveProfileChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const profileUser = urlParams.get('user') || localStorage.getItem('desiadda_user');
         const loggedInUser = localStorage.getItem('desiadda_user');
+        let currentUserData = {};
 
         async function loadProfile() {
             try {
                 const res = await fetch(`/profile/${profileUser}`);
-                const user = await res.json();
-                if(!user) return document.getElementById('profileHeader').innerHTML = "<h4>User nahi mila!</h4>";
+                currentUserData = await res.json();
+                if(!currentUserData) return document.getElementById('profileHeader').innerHTML = "<h4>User nahi mila!</h4>";
 
-                const isMyProfile = loggedInUser === user.username;
+                const isMyProfile = loggedInUser === currentUserData.username;
 
                 document.getElementById('profileHeader').innerHTML = `
-                    <img src="${user.profilePic || 'https://i.pravatar.cc/150'}" class="profile-pic">
+                    <img src="${currentUserData.profilePic || 'https://i.pravatar.cc/150'}" class="profile-pic">
                     <div>
-                        <div class="d-flex align-items-center mb-3">
-                            <h2 class="me-3 mb-0">${user.username} ${user.isVerified ? '<i class="fa-solid fa-circle-check text-primary"></i>' : ''}</h2>
-                            ${isMyProfile ? `<button class="btn btn-outline-dark btn-sm" onclick="alert('Settings & Edit Profile modal jald open hoga!')"><i class="fa-solid fa-gear"></i> Edit Profile / Settings</button>` : ''}
+                        <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
+                            <h2 class="mb-0">${currentUserData.username} ${currentUserData.isVerified ? '<i class="fa-solid fa-circle-check text-primary"></i>' : ''}</h2>
+                            ${isMyProfile ? `<button class="btn btn-outline-dark btn-sm" onclick="openEditModal()"><i class="fa-solid fa-gear"></i> Edit Profile</button>` : ''}
                         </div>
-                        <p class="mb-1 fw-bold">${user.name || ''}</p>
-                        <p class="text-muted">${user.bio || ''}</p>
-                        ${user.websiteLink ? `<a href="${user.websiteLink}" target="_blank">${user.websiteLink}</a>` : ''}
+                        <p class="mb-1 fw-bold">${currentUserData.name || ''}</p>
+                        <p class="text-muted mb-1">${currentUserData.bio || ''}</p>
+                        ${currentUserData.websiteLink ? `<a href="${currentUserData.websiteLink}" target="_blank">${currentUserData.websiteLink}</a>` : ''}
                     </div>
                 `;
             } catch (err) {
                 document.getElementById('profileHeader').innerHTML = "<h4>Profile load karne me error aayi!</h4>";
+            }
+        }
+
+        function openEditModal() {
+            document.getElementById('editName').value = currentUserData.name || '';
+            document.getElementById('editUsername').value = currentUserData.username || '';
+            document.getElementById('editBio').value = currentUserData.bio || '';
+            document.getElementById('editWebsite').value = currentUserData.websiteLink || '';
+            document.getElementById('editPic').value = currentUserData.profilePic || '';
+            new bootstrap.Modal(document.getElementById('editProfileModal')).show();
+        }
+
+        async function saveProfileChanges() {
+            const data = {
+                oldUsername: currentUserData.username,
+                newUsername: document.getElementById('editUsername').value,
+                name: document.getElementById('editName').value,
+                bio: document.getElementById('editBio').value,
+                websiteLink: document.getElementById('editWebsite').value,
+                profilePic: document.getElementById('editPic').value
+            };
+            const res = await fetch('/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.success) {
+                localStorage.setItem('desiadda_user', result.newUsername);
+                window.location.href = `profile.html?user=${result.newUsername}`;
+            } else {
+                alert(result.message);
             }
         }
         loadProfile();
