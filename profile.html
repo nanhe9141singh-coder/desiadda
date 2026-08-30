@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - DesiAdda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .profile-container { max-width: 935px; margin: 30px auto; padding: 20px; }
+        .profile-header { display: flex; align-items: center; margin-bottom: 40px; }
+        .profile-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-right: 80px; }
+    </style>
+</head>
+<body>
+    <div class="container profile-container">
+        <div class="profile-header" id="profileHeader">
+            <p>Loading profile...</p>
+        </div>
+        <hr>
+        <div class="row" id="userPosts">
+            <p class="text-center text-muted">Abhi koi post nahi hai.</p>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileUser = urlParams.get('user') || localStorage.getItem('desiadda_user');
+        const loggedInUser = localStorage.getItem('desiadda_user');
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(`/profile/${profileUser}`);
+                const user = await res.json();
+                if(!user) return document.getElementById('profileHeader').innerHTML = "<h4>User nahi mila!</h4>";
+
+                const isMyProfile = loggedInUser === user.username;
+
+                document.getElementById('profileHeader').innerHTML = `
+                    <img src="${user.profilePic || 'https://i.pravatar.cc/150'}" class="profile-pic">
+                    <div>
+                        <div class="d-flex align-items-center mb-3">
+                            <h2 class="me-3 mb-0">${user.username} ${user.isVerified ? '<i class="fa-solid fa-circle-check text-primary"></i>' : ''}</h2>
+                            ${isMyProfile ? `<button class="btn btn-outline-dark btn-sm" onclick="alert('Settings & Edit Profile modal jald open hoga!')"><i class="fa-solid fa-gear"></i> Edit Profile / Settings</button>` : ''}
+                        </div>
+                        <p class="mb-1 fw-bold">${user.name || ''}</p>
+                        <p class="text-muted">${user.bio || ''}</p>
+                        ${user.websiteLink ? `<a href="${user.websiteLink}" target="_blank">${user.websiteLink}</a>` : ''}
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById('profileHeader').innerHTML = "<h4>Profile load karne me error aayi!</h4>";
+            }
+        }
+        loadProfile();
+    </script>
+</body>
+</html>

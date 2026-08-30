@@ -43,41 +43,32 @@ const adminSchema = new mongoose.Schema({
 });
 const Admin = mongoose.model('Admin', adminSchema);
 
-const postSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    content: { type: String },
-    image: { type: String },
-    category: { type: String, default: "Desi" },
-    likes: [{ type: String }],
-    comments: [{ username: String, text: String, createdAt: { type: Date, default: Date.now } }],
+// Story Books Schema
+const bookSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    author: { type: String, required: true },
+    category: { type: String, default: "Romance" },
+    content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }
 });
-const Post = mongoose.model('Post', postSchema);
+const Book = mongoose.model('Book', bookSchema);
 
-const reelSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    videoUrl: { type: String, required: true },
-    caption: { type: String },
-    likes: [{ type: String }],
-    createdAt: { type: Date, default: Date.now }
-});
-const Reel = mongoose.model('Reel', reelSchema);
-
-const storySchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    userPic: { type: String, required: true },
-    image: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now, expires: 86400 }
-});
-const Story = mongoose.model('Story', storySchema);
-
-const messageSchema = new mongoose.Schema({
-    sender: { type: String, required: true },
-    receiver: { type: String, required: true },
+// Confessions Schema
+const confessionSchema = new mongoose.Schema({
     text: { type: String, required: true },
+    mode: { type: String, default: "Party Mode" },
+    isAnonymous: { type: Boolean, default: false },
+    author: { type: String, default: "Anonymous" },
     createdAt: { type: Date, default: Date.now }
 });
-const Message = mongoose.model('Message', messageSchema);
+const Confession = mongoose.model('Confession', confessionSchema);
+
+// Branding Schema
+const brandingSchema = new mongoose.Schema({
+    siteName: { type: String, default: "DesiAdda" },
+    logoUrl: { type: String, default: "" }
+});
+const Branding = mongoose.model('Branding', brandingSchema);
 
 const otpStorage = {};
 
@@ -85,9 +76,13 @@ async function initSystem() {
     if(!await Admin.findOne({ username: "admin" })) {
         await new Admin({ username: "admin", password: "admin123", role: "Super-Admin" }).save();
     }
+    if(!await Branding.findOne()) {
+        await new Branding({ siteName: "DesiAdda", logoUrl: "" }).save();
+    }
 }
 initSystem();
 
+// OTP & Auth Routes
 app.post('/send-otp', async (req, res) => {
     try {
         const { emailOrMobile, username } = req.body;
@@ -127,6 +122,7 @@ app.post('/login', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Server error!" }); }
 });
 
+// Profile Routes
 app.get('/profile/:username', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username }).populate('savedPosts');
@@ -142,45 +138,50 @@ app.post('/profile/update', async (req, res) => {
     } catch (e) { res.status(500).json({ message: "Error" }); }
 });
 
-app.get('/posts', async (req, res) => {
-    res.json(await Post.find().sort({ createdAt: -1 }));
+// Story Books APIs
+app.get('/books', async (req, res) => {
+    try {
+        const books = await Book.find().sort({ createdAt: -1 });
+        res.json(books);
+    } catch (e) { res.status(500).json([]); }
 });
 
-app.post('/posts', async (req, res) => {
-    await new Post(req.body).save();
-    res.json({ success: true });
+app.post('/books', async (req, res) => {
+    try {
+        await new Book(req.body).save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ message: "Error saving book" }); }
 });
 
-app.post('/posts/:id/like', async (req, res) => {
-    const post = await Post.findById(req.params.id);
-    const user = req.body.username;
-    if(post.likes.includes(user)) post.likes.pull(user);
-    else post.likes.push(user);
-    await post.save();
-    res.json({ success: true });
+// Confessions APIs
+app.get('/confessions', async (req, res) => {
+    try {
+        const confs = await Confession.find().sort({ createdAt: -1 });
+        res.json(confs);
+    } catch (e) { res.status(500).json([]); }
 });
 
-app.get('/reels', async (req, res) => {
-    res.json(await Reel.find().sort({ createdAt: -1 }));
+app.post('/confessions', async (req, res) => {
+    try {
+        await new Confession(req.body).save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ message: "Error saving confession" }); }
 });
 
-app.post('/reels', async (req, res) => {
-    await new Reel(req.body).save();
-    res.json({ success: true });
+// Branding APIs
+app.get('/branding', async (req, res) => {
+    try {
+        const brand = await Branding.findOne();
+        res.json(brand || { siteName: "DesiAdda", logoUrl: "" });
+    } catch (e) { res.json({ siteName: "DesiAdda", logoUrl: "" }); }
 });
 
-app.get('/stories', async (req, res) => {
-    res.json(await Story.find().sort({ createdAt: -1 }));
-});
-
-app.post('/stories', async (req, res) => {
-    await new Story(req.body).save();
-    res.json({ success: true });
-});
-
-app.get('/messages/:u1/:u2', async (req, res) => {
-    const msgs = await Message.find({ $or: [{ sender: req.params.u1, receiver: req.params.u2 }, { sender: req.params.u2, receiver: req.params.u1 }] }).sort({ createdAt: 1 });
-    res.json(msgs);
+app.post('/branding', async (req, res) => {
+    try {
+        const { siteName, logoUrl } = req.body;
+        await Branding.findOneAndUpdate({}, { siteName, logoUrl }, { upsert: true, new: true });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ message: "Error updating branding" }); }
 });
 
 server.listen(3000, () => {
