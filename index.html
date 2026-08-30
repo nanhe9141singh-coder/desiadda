@@ -7,94 +7,169 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .navbar { background: white; border-bottom: 1px solid #dbdbdb; }
-        .main-container { max-width: 935px; margin: 20px auto; padding: 0 15px; }
-        .card { border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; background: white; }
+        body { background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding-bottom: 60px; }
+        /* Instagram Top Navbar */
+        .ig-navbar { background: white; border-bottom: 1px solid #dbdbdb; position: sticky; top: 0; z-index: 1000; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .ig-logo { font-family: cursive; font-size: 26px; font-weight: bold; color: #262626; text-decoration: none; }
+        /* Main Layout */
+        .main-wrapper { max-width: 935px; margin: 20px auto; display: flex; gap: 30px; padding: 0 15px; }
+        .feed-section { flex: 2; }
+        .sidebar-section { flex: 1; display: none; }
+        @media(min-width: 768px) { .sidebar-section { display: block; } }
+        /* Instagram Stories Tray */
+        .stories-tray { background: white; border: 1px solid #dbdbdb; border-radius: 8px; padding: 12px; display: flex; gap: 15px; overflow-x: auto; margin-bottom: 20px; }
+        .story-item { text-align: center; cursor: pointer; min-width: 65px; }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-num(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+        .story-ring img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        /* IG Card / Post */
+        .ig-card { background: white; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; }
+        .ig-header { display: flex; align-items: center; padding: 12px; }
+        .ig-header img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
+        /* Bottom Nav for Mobile */
+        .mobile-bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #dbdbdb; display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; }
+        .mobile-bottom-nav a { font-size: 22px; color: #262626; text-decoration: none; }
+        @media(min-width: 768px) { .mobile-bottom-nav { display: none; } }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg sticky-top px-3">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold fs-4" href="index.html" id="brandLogoText">DesiAdda</a>
-            <div class="d-flex align-items-center gap-3">
-                <a href="index.html" class="text-dark fs-5"><i class="fa-solid fa-house"></i></a>
-                <a href="profile.html" class="text-dark fs-5"><i class="fa-solid fa-user"></i></a>
-                <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
-            </div>
-        </div>
-    </nav>
 
-    <div class="container main-container">
-        <!-- Welcome Banner -->
-        <div class="card p-3 text-center bg-white shadow-sm">
-            <h4 class="fw-bold">Swagat hai, <span id="welcomeUser" class="text-primary"></span>! 🔥</h4>
-            <p class="text-muted mb-0">Apna din shuru karein DesiAdda par—Stories, Books, Confessions aur Polls ke sath!</p>
+    <!-- Top Instagram Navbar -->
+    <div class="ig-navbar">
+        <a href="index.html" class="ig-logo" id="brandLogoText">DesiAdda</a>
+        <div class="d-flex align-items-center gap-3">
+            <a href="profile.html" class="text-dark fs-5 text-decoration-none"><i class="fa-regular fa-user"></i></a>
+            <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <!-- Left/Center Feed & Features -->
+        <div class="feed-section">
+            
+            <!-- Instagram Stories Tray -->
+            <div class="stories-tray" id="storiesTray">
+                <div class="story-item">
+                    <div class="story-ring"><img src="https://i.pravatar.cc/150?img=1" alt="story"></div>
+                    <small class="text-truncate d-block" style="width: 65px;">your_story</small>
+                </div>
+                <div class="story-item">
+                    <div class="story-ring"><img src="https://i.pravatar.cc/150?img=2" alt="story"></div>
+                    <small class="text-truncate d-block" style="width: 65px;">desiboy</small>
+                </div>
+                <div class="story-item">
+                    <div class="story-ring"><img src="https://i.pravatar.cc/150?img=3" alt="story"></div>
+                    <small class="text-truncate d-block" style="width: 65px;">pooja_99</small>
+                </div>
+            </div>
+
+            <!-- 1. Community Story Books Section -->
+            <div class="ig-card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0" style="font-size: 18px;"><i class="fa-solid fa-book-open text-danger"></i> Community Story Books</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bookModal"><i class="fa-solid fa-plus"></i> Write Book</button>
+                </div>
+                <div id="booksContainer" class="row">
+                    <p class="text-muted text-center small">Kahaniyan load ho rahi hain...</p>
+                </div>
+            </div>
+
+            <!-- 2. Whisper Wall & Voice Notes / Confessions -->
+            <div class="ig-card p-3">
+                <h5 class="fw-bold mb-3" style="font-size: 18px;"><i class="fa-solid fa-masks-theater text-warning"></i> Whisper Wall & Confessions</h5>
+                <div class="mb-3">
+                    <textarea id="confessionText" class="form-control mb-2" placeholder="Apna secret confession ya dil ki baat likhein..."></textarea>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="anonCheck">
+                            <label class="form-check-label small text-muted" for="anonCheck">Post Anonymously</label>
+                        </div>
+                        <button class="btn btn-dark btn-sm px-4" onclick="postConfession()">Post Whisper</button>
+                    </div>
+                </div>
+                <div id="confessionsContainer">
+                    <p class="text-muted text-center small">Confessions load ho rahe hain...</p>
+                </div>
+            </div>
+
+            <!-- 3. Desi Polls & Battles -->
+            <div class="ig-card p-3">
+                <h5 class="fw-bold mb-3" style="font-size: 18px;"><i class="fa-solid fa-square-poll-vertical text-success"></i> Desi Polls & Battles</h5>
+                <div id="pollsContainer">
+                    <!-- Dynamic Poll -->
+                    <div class="p-3 border rounded bg-light text-center">
+                        <p class="fw-bold mb-2">Chai vs Coffee: Aaj ka mood kya hai?</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn btn-outline-primary btn-sm px-4" onclick="alert('Voted for Chai! ☕')">☕ Desi Chai (65%)</button>
+                            <button class="btn btn-outline-success btn-sm px-4" onclick="alert('Voted for Coffee! 🥤')">🥤 Cold Coffee (35%)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- 1. Community Story Books Section -->
-        <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">📖 Community Story Books</h5>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bookModal">✍️ Write Book</button>
+        <!-- Right Sidebar (Instagram Style Profile Info) -->
+        <div class="sidebar-section">
+            <div class="d-flex align-items-center mb-4">
+                <img id="sidebarUserPic" src="https://i.pravatar.cc/150" class="rounded-circle me-3" style="width: 56px; height: 56px; object-fit: cover;">
+                <div>
+                    <h6 class="mb-0 fw-bold" id="sidebarUsername">loading...</h6>
+                    <small class="text-muted" id="sidebarName">DesiAdda User</small>
+                </div>
+                <a href="profile.html" class="ms-auto text-primary text-decoration-none fw-bold small">Profile</a>
             </div>
-            <div id="booksContainer" class="row">
-                <p class="text-muted text-center">Books load ho rahi hain...</p>
-            </div>
+            <p class="text-muted small">© 2026 DesiAdda from Meta & Community</p>
         </div>
+    </div>
 
-        <!-- 2. Voice Notes & Confessions Wall -->
-        <div class="card p-3">
-            <h5 class="fw-bold mb-3">🤫 Whisper Wall & Confessions</h5>
-            <div class="mb-3">
-                <textarea id="confessionText" class="form-control mb-2" placeholder="Apna secret confession ya dil ki baat likhein..."></textarea>
-                <button class="btn btn-dark btn-sm" onclick="postConfession()">Post Whisper</button>
-            </div>
-            <div id="confessionsContainer">
-                <p class="text-muted text-center">Confessions load ho rahe hain...</p>
-            </div>
-        </div>
-
-        <!-- 3. Desi Polls & Battles -->
-        <div class="card p-3">
-            <h5 class="fw-bold mb-3">📊 Desi Polls & Battles</h5>
-            <div id="pollsContainer">
-                <p class="text-muted text-center">Polls load ho rahe hain...</p>
-            </div>
-        </div>
+    <!-- Mobile Bottom Navigation (Instagram Style) -->
+    <div class="mobile-bottom-nav">
+        <a href="index.html"><i class="fa-solid fa-house"></i></a>
+        <a href="#" onclick="alert('Search & Explore jald aa raha hai!')"><i class="fa-regular fa-compass"></i></a>
+        <a href="#" onclick="alert('Reels feed open ho rahi hai!')"><i class="fa-solid fa-clapperboard"></i></a>
+        <a href="profile.html"><i class="fa-regular fa-user"></i></a>
     </div>
 
     <!-- Write Book Modal -->
     <div class="modal fade" id="bookModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content p-3">
-                <h4 class="mb-3">New Story Book</h4>
-                <input type="text" id="bookTitle" class="form-control mb-2" placeholder="Book Title">
+                <h4 class="mb-3">Publish Story Book</h4>
+                <input type="text" id="bookTitle" class="form-control mb-2" placeholder="Book Title (e.g. Pyar ki Rahein)">
                 <select id="bookCategory" class="form-control mb-2">
                     <option value="Romance">Romance</option>
                     <option value="Thriller">Thriller</option>
                     <option value="Comedy">Comedy</option>
                     <option value="Desi Drama">Desi Drama</option>
                 </select>
-                <textarea id="bookContent" class="form-control mb-2" rows="5" placeholder="Apni kahani yahan likhein..."></textarea>
-                <button class="btn btn-success w-100" onclick="publishBook()">Publish Book</button>
+                <textarea id="bookContent" class="form-control mb-2" rows="5" placeholder="Apni kahani ka pehla chapter yahan likhein..."></textarea>
+                <button class="btn btn-success w-100" onclick="publishBook()">Publish to Community</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const loggedUser = localStorage.getItem('desiadda_user');
-        if(!loggedUser) window.location.href = 'login.html';
-        document.getElementById('welcomeUser').innerText = loggedUser;
+        const loggedUser = localStorage.getItem('desiadda_user') || "desi_user";
+        document.getElementById('sidebarUsername').innerText = loggedUser;
+
+        // Fetch User Profile Data for Sidebar
+        fetch(`/profile/${loggedUser}`)
+            .then(res => res.json())
+            .then(user => {
+                if(user && user.username) {
+                    document.getElementById('sidebarUsername').innerText = user.username;
+                    document.getElementById('sidebarName').innerText = user.name || "DesiAdda Creator";
+                    if(user.profilePic) document.getElementById('sidebarUserPic').src = user.profilePic;
+                }
+            }).catch(e => console.log(e));
 
         function logout() {
             localStorage.removeItem('desiadda_user');
             window.location.href = 'login.html';
         }
 
-        // Load Branding Name & Logo
+        // Branding
         fetch('/branding').then(res => res.json()).then(data => {
             if(data.siteName) {
                 document.getElementById('brandLogoText').innerText = data.siteName;
@@ -102,22 +177,29 @@
             }
         });
 
-        // Load Story Books
+        // Load Books
         async function loadBooks() {
-            const res = await fetch('/books');
-            const books = await res.json();
-            const container = document.getElementById('booksContainer');
-            if(books.length === 0) { container.innerHTML = '<p class="text-muted text-center">Abhi koi book nahi hai.</p>'; return; }
-            container.innerHTML = books.map(b => `
-                <div class="col-md-4 mb-3">
-                    <div class="p-3 border rounded bg-light h-100">
-                        <span class="badge bg-primary mb-1">${b.category}</span>
-                        <h6 class="fw-bold">${b.title}</h6>
-                        <small class="text-muted">By @${b.author}</small>
-                        <p class="small text-truncate mt-2">${b.content}</p>
+            try {
+                const res = await fetch('/books');
+                const books = await res.json();
+                const container = document.getElementById('booksContainer');
+                if(!Array.isArray(books) || books.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center small py-3">Abhi koi book nahi hai. Pehli kahani aap likhein!</p>';
+                    return;
+                }
+                container.innerHTML = books.map(b => `
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3 border rounded bg-light h-100 shadow-sm">
+                            <span class="badge bg-danger mb-1">${b.category}</span>
+                            <h6 class="fw-bold mb-1">${b.title}</h6>
+                            <small class="text-muted d-block mb-2">By @${b.author}</small>
+                            <p class="small text-muted text-truncate mb-0">${b.content}</p>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (err) {
+                document.getElementById('booksContainer').innerHTML = '<p class="text-danger text-center small">Error loading books</p>';
+            }
         }
 
         async function publishBook() {
@@ -126,58 +208,56 @@
             const content = document.getElementById('bookContent').value;
             if(!title || !content) return alert('Sabhi fields bharein!');
 
-            await fetch('/books', {
+            const res = await fetch('/books', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, author: loggedUser, category, content })
             });
-            location.reload();
+            if(res.ok) location.reload();
+            else alert('Error publishing book');
         }
 
         // Load Confessions
         async function loadConfessions() {
-            const res = await fetch('/confessions');
-            const confs = await res.json();
-            const container = document.getElementById('confessionsContainer');
-            if(confs.length === 0) { container.innerHTML = '<p class="text-muted text-center">Abhi koi confession nahi hai.</p>'; return; }
-            container.innerHTML = confs.map(c => `
-                <div class="p-2 border-bottom mb-2">
-                    <p class="mb-1">${c.text}</p>
-                    <small class="text-muted">— ${c.isAnonymous ? 'Anonymous' : '@' + c.author}</small>
-                </div>
-            `).join('');
+            try {
+                const res = await fetch('/confessions');
+                const confs = await res.json();
+                const container = document.getElementById('confessionsContainer');
+                if(!Array.isArray(confs) || confs.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center small py-2">Abhi koi confession nahi hai.</p>';
+                    return;
+                }
+                container.innerHTML = confs.map(c => `
+                    <div class="p-2 border-bottom mb-2 bg-light rounded">
+                        <p class="mb-1 fw-medium">${c.text}</p>
+                        <small class="text-muted">— ${c.isAnonymous ? '🕵️‍♂️ Anonymous' : '@' + c.author}</small>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.log(err);
+            }
         }
 
         async function postConfession() {
             const text = document.getElementById('confessionText').value;
-            if(!text) return alert kuch likhein!`;
-            await fetch('/confessions', {
+            const isAnonymous = document.getElementById('anonCheck').checked;
+            if(!text) return alert('Kuchh likhein!');
+
+            const res = await fetch('/confessions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, author: loggedUser })
+                body: JSON.stringify({ text, author: loggedUser, isAnonymous })
             });
-            document.getElementById('confessionText').value = '';
-            loadConfessions();
-        }
-
-        // Load Polls
-        async function loadPolls() {
-            const res = await fetch('/polls');
-            const polls = await res.json();
-            const container = document.getElementById('pollsContainer');
-            if(polls.length === 0) {
-                container.innerHTML = `<div class="p-3 border rounded bg-light text-center">
-                    <p class="fw-bold mb-1">Tea vs Coffee: Aapko kya pasand hai?</p>
-                    <button class="btn btn-sm btn-outline-primary m-1">☕ Chai Lover</button>
-                    <button class="btn btn-sm btn-outline-success m-1">🥤 Coffee Lover</button>
-                </div>`;
-                return;
+            if(res.ok) {
+                document.getElementById('confessionText').value = '';
+                loadConfessions();
+            } else {
+                alert('Error posting confession');
             }
         }
 
         loadBooks();
         loadConfessions();
-        loadPolls();
     </script>
 </body>
 </html>
