@@ -3,117 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up - DesiAdda</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Sign Up - DesiAdda</title>
     <style>
-        body { background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .signup-card { background: white; border: 1px solid #dbdbdb; padding: 40px; width: 350px; text-align: center; border-radius: 4px; }
-        .logo { font-family: 'Brush Script MT', cursive; font-size: 40px; color: #262626; margin-bottom: 20px; font-weight: bold; }
-        .form-control { background-color: #fafafa; border: 1px solid #dbdbdb; font-size: 14px; margin-bottom: 10px; border-radius: 3px; }
-        .btn-primary { width: 100%; background-color: #0095f6; border: none; font-weight: 600; padding: 7px; border-radius: 8px; margin-top: 10px; }
-        .btn-primary:hover { background-color: #1877f2; }
-        .switch-box { background: white; border: 1px solid #dbdbdb; padding: 20px; width: 350px; text-align: center; margin-top: 10px; border-radius: 4px; font-size: 14px; }
-        .switch-box a { color: #0095f6; text-decoration: none; font-weight: 600; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background-color: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; }
+        
+        .signup-card { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 40px; text-align: center; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .logo { font-family: 'Brush Script MT', cursive; font-size: 42px; background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; font-weight: bold; }
+        .subtitle { font-size: 14px; font-weight: bold; color: #8e8e8e; margin-bottom: 20px; line-height: 1.4; }
+        
+        input { width: 100%; padding: 12px; margin-bottom: 10px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 13px; outline: none; }
+        input:focus { border-color: #a8a8a8; }
+        
+        .signup-btn { width: 100%; background: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 14px; }
+        .signup-btn:hover { background: #1877f2; }
+        
+        .login-box { background: #ffffff; border: 1px solid #dbdbdb; width: 380px; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; font-size: 14px; }
+        .login-box a { color: #0095f6; text-decoration: none; font-weight: bold; }
+        .resend-link { font-size: 12px; color: #0095f6; cursor: pointer; margin-top: 15px; display: inline-block; font-weight: bold; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div style="display: flex; flex-direction: column; align-items: center;">
-        <div class="signup-card">
-            <div class="logo">DesiAdda</div>
-            <p style="color: #8e8e8e; font-weight: 600; font-size: 15px; margin-bottom: 20px;">Doston ki duniya me judne ke liye sign up karein.</p>
+    <div class="signup-card">
+        <h1 class="logo">DesiAdda</h1>
+        <p class="subtitle">Doston ki duniya se judne ke liye apna account banayein.</p>
+        
+        <div id="step1Form">
+            <input type="text" id="emailOrMobile" placeholder="Email address">
+            <input type="text" id="fullName" placeholder="Full Name">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
             
-            <form id="signupForm">
-                <input type="text" id="emailOrMobile" class="form-control" placeholder="Mobile number or email" required>
-                <input type="text" id="name" class="form-control" placeholder="Full Name" required>
-                <input type="text" id="username" class="form-control" placeholder="Username" required>
-                <input type="password" id="password" class="form-control" placeholder="Password" required>
-                
-                <div class="text-start" style="font-size: 12px; color: #8e8e8e; margin: 10px 0;">
-                    <label>Birth Date:</label>
-                    <input type="date" id="dob" class="form-control" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Sign up</button>
-            </form>
-
-            <div id="errorMsg" class="text-danger mt-2" style="font-size: 13px;"></div>
-        </div>
-
-        <div class="switch-box">
-            Account hai? <a href="login.html">Log in</a>
-        </div>
-    </div>
-
-    <!-- OTP Modal -->
-    <div class="modal fade" id="otpModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4 text-center">
-                <h4>OTP Verification</h4>
-                <p class="text-muted">Aapke email/mobile par bheja gaya 6 digit OTP darj karein</p>
-                <input type="text" id="otpInput" class="form-control text-center fs-4" placeholder="------" maxlength="6">
-                <button id="verifyOtpBtn" class="btn btn-success mt-3">Verify & Register</button>
-                <div id="mockOtpDisplay" class="mt-2 text-primary font-monospace" style="font-size: 14px;"></div>
+            <div style="text-align: left; margin: 5px 0 10px 0;">
+                <label style="font-size: 11px; color: #737373;">Janm-tithi (DOB):</label>
+                <input type="date" id="dob" style="margin-bottom: 0;">
             </div>
+
+            <button class="signup-btn" onclick="sendOtpAction()">Next</button>
+        </div>
+
+        <div id="step2Form" class="hidden">
+            <p style="font-size: 13px; margin-bottom: 15px; color: #262626;">Aapke email par OTP bhej diya gaya hai:</p>
+            <input type="text" id="otpInput" placeholder="6-digit OTP enter karein">
+            <button class="signup-btn" onclick="verifyOtpAction()">Confirm & Sign Up</button>
+            <br>
+            <span class="resend-link" onclick="sendOtpAction()">🔄 Resend OTP</span>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="login-box">
+        Pehle se account hai? <a href="login.html">Log in</a>
+    </div>
+
     <script>
-        let registeredData = {};
+        let tempUserData = {};
 
-        document.getElementById('signupForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            registeredData = {
-                emailOrMobile: document.getElementById('emailOrMobile').value,
-                name: document.getElementById('name').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-                dob: document.getElementById('dob').value
-            };
-            const errorMsg = document.getElementById('errorMsg');
+        async function sendOtpAction() {
+            let emailOrMobile = document.getElementById('emailOrMobile').value.trim();
+            let name = document.getElementById('fullName').value.trim();
+            let username = document.getElementById('username').value.trim();
+            let password = document.getElementById('password').value.trim();
+            let dob = document.getElementById('dob').value;
 
-            try {
-                const response = await fetch('/send-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(registeredData)
-                });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
-                    otpModal.show();
-                    if(data.mockOtp) {
-                        document.getElementById('mockOtpDisplay').innerText = "Testing OTP: " + data.mockOtp;
-                    }
-                } else {
-                    errorMsg.innerText = data.message || "Kuch galat ho gaya!";
-                }
-            } catch (err) {
-                errorMsg.innerText = "Server se connect nahi ho pa raha hai!";
+            if(!emailOrMobile || !name || !username || !password || !dob) {
+                alert("Kripya sabhi fields bharein!");
+                return;
             }
-        });
 
-        document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
-            const otp = document.getElementById('otpInput').value;
+            tempUserData = { emailOrMobile, name, username, password, dob };
+
             try {
-                const response = await fetch('/verify-otp', {
+                let res = await fetch('/send-otp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ emailOrMobile: registeredData.emailOrMobile, otp: otp })
+                    body: JSON.stringify(tempUserData)
                 });
-                const data = await response.json();
-                if(response.ok) {
+                let data = await res.json();
+
+                if(res.ok) {
+                    alert(data.message + (data.mockOtp ? ` (Mock OTP: ${data.mockOtp})` : ""));
+                    document.getElementById('step1Form').classList.add('hidden');
+                    document.getElementById('step2Form').classList.remove('hidden');
+                } else {
+                    alert(data.message || "Sign up error!");
+                }
+            } catch(e) {
+                alert("Server connection failed!");
+            }
+        }
+
+        async function verifyOtpAction() {
+            let otp = document.getElementById('otpInput').value.trim();
+            if(!otp) {
+                alert("Kripya OTP enter karein!");
+                return;
+            }
+
+            try {
+                let res = await fetch('/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emailOrMobile: tempUserData.emailOrMobile, otp })
+                });
+                let data = await res.json();
+
+                if(res.ok) {
                     alert("Account successfully ban gaya! Ab aap login kar sakte hain.");
-                    window.location.href = 'login.html';
+                    window.location.href = "login.html";
                 } else {
                     alert(data.message || "Galat OTP!");
                 }
-            } catch (err) {
-                alert("Server error!");
+            } catch(e) {
+                alert("Verification failed!");
             }
-        });
+        }
     </script>
 </body>
 </html>
